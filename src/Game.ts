@@ -1,7 +1,7 @@
 import type { Point } from './Point'
 import type { Shape } from './Shape'
 import { IViewport } from './IViewport'
-import { MD4, MD5 } from 'bun'
+import * as Constants from './Constants'
 
 
 // TODO:
@@ -29,8 +29,8 @@ export class Game {
         this.gameAreaViewportHeight = height
         this.viewport = viewport
 
-        this.gameAreaWidth = 100
-        this.gameAreaHeight = 100
+        this.gameAreaWidth = Constants.GAME_AREA_WIDTH
+        this.gameAreaHeight = Constants.GAME_AREA_HEIGHT
 
         this.msPerFrame = 1000 / 60
 
@@ -68,37 +68,38 @@ export class Game {
         this.renderInvaderBullets()
 
         this.renderGameOver()
+
+        this.renderGameObjectHitBox(this.gameState.cannonPosition, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT)
     }
 
     renderLives(): void {
-        const titlePos: Point = { X: 65, Y: 5 }
-        this.viewport.renderText(this.adjustPositionToViewport(titlePos), "LIVES", 0)
+        const titlePos: Point = Constants.LIVES_TITLE_POSITION 
+        this.viewport.renderText(this.transformPointForViewport(titlePos), "LIVES", 0)
         
         const width = 5
         const height = 3
 
-        const y = 2
-        let x = 80
+        let position = Constants.LIVES_INITIAL_POSITION
 
         for (let i = 0; i < this.gameState.cannonHitpoints; i++) {
-            this.renderGameObject({X: x, Y: y}, width, height)
-            x += width + 1
+            this.renderGameObjectHitBox(position, width, height)
+            position =  { ...position, X: width + 1 }
         }
     }
 
     renderScore(): void {
-        const titlePos: Point = { X: 3, Y: 5 }
-        const scorePos: Point = { X: 20, Y: 5 } 
+        const titlePos: Point = Constants.SCORE_TITLE_POSITION
+        const scorePos: Point = Constants.SCORE_VALUE_POSITION 
 
-        this.viewport.renderText(this.adjustPositionToViewport(titlePos), "SCORE", 0)
-        this.viewport.renderText(this.adjustPositionToViewport(scorePos), this.gameState.score.toString(), 1) 
+        this.viewport.renderText(this.transformPointForViewport(titlePos), Constants.SCORE_TEXT, 0)
+        this.viewport.renderText(this.transformPointForViewport(scorePos), this.gameState.score.toString(), 1) 
     }
 
     renderGameOver(): void {
         if (!this.gameOver()) return
 
-        const pos: Point = { X: 20, Y: 50 }
-        this.viewport.renderText(this.adjustPositionToViewport(pos), "GAME OVER", 2)
+        const pos: Point = Constants.GAME_OVER_POSITION 
+        this.viewport.renderText(this.transformPointForViewport(pos), Constants.GAME_OVER_TEXT, 2)
     }
 
     resetViewport(): void {
@@ -106,35 +107,40 @@ export class Game {
     }
 
     renderCannon(): void {
-        this.renderGameObject(this.gameState.cannonPosition, this.cannonWidth, this.cannonHeight)
+        const startPosition = this.transformPointForViewport(this.gameState.cannonPosition)
+        const shape = this.getCannonShape().map(v => this.transformPointForViewport(v))
+
+        this.viewport.render(startPosition, shape)
     }
 
     renderBullets(): void {
         for (let i = 0; i < this.gameState.bullets.length; i++) {
-            this.renderGameObject(
+            this.renderGameObjectHitBox(
                 this.gameState.bullets[i], 
-                this.bulletWidth, 
-                this.bulletHeight)
+                Constants.BULLET_WIDTH, 
+                Constants.BULLET_HEIGHT)
         }
     }
 
     renderInvaderBullets(): void {
         for (let i = 0; i < this.gameState.invaderBullets.length; i++) {
-            this.renderGameObject(
+            this.renderGameObjectHitBox(
                 this.gameState.invaderBullets[i], 
                 this.invaderBulletWidth,
                 this.invaderBulletHeight)
         }
     }
 
-    renderGameObject(position: Point, width: number, height: number): void {
-        this.renderShape(
-            this.adjustPositionToViewport(position),
-            this.buildShapeToViewport(width, height))
+    renderGameObjectHitBox(position: Point, width: number, height: number): void {
+        const vPosition = this.transformPointForViewport(position)
+        const hitBox = this.buildHitBox(width, height)
+        const vHitBox = this.transformShapeForViewport(hitBox)
+
+        this.renderHitBox(vPosition, vHitBox)
     }
 
-    renderShape(position: Point, shape : Shape) : void {
-        this.viewport.render(position, shape)
+    renderHitBox(position: Point, shape: Shape): void {
+        this.viewport.renderBorder(position, shape)
     }
     
     // game state
@@ -162,32 +168,36 @@ export class Game {
         if (this.gameState.leftArrowPressed) this.moveCannonLeft()
         this.shoot()
         this.updateBullets()
-        this.updateInvaders()
+        // this.updateInvaders()
         this.invaderShoot()
-        this.updateInvaderBullets()
+        // this.updateInvaderBullets()
     }
 
     // viewport 
     
-    adjustXToViewport(x: number): number {
+    transformXForViewport(x: number): number {
         return this.gameAreaViewportWidth * x / this.gameAreaWidth
     }
 
-    adjustYToViewport(y: number): number {
+    transformYForViewport(y: number): number {
         return this.gameAreaViewportHeight * y / this.gameAreaHeight
     }
 
-    adjustPositionToViewport(position: Point) : Point {
-        return {X: this.adjustXToViewport(position.X), Y: this.adjustYToViewport(position.Y)}
+    transformPointForViewport(position: Point) : Point {
+        return {X: this.transformXForViewport(position.X), Y: this.transformYForViewport(position.Y)}
     }
 
-    buildShapeToViewport(objWidth: number, objHeight: number): Shape {
+    buildHitBox(width: number, height: number): Shape {
         return [
-            this.adjustPositionToViewport({X: 0, Y: 0}),
-            this.adjustPositionToViewport({X: objWidth, Y: 0}),
-            this.adjustPositionToViewport({X: objWidth, Y: objHeight}),
-            this.adjustPositionToViewport({X: 0, Y: objHeight})
+            {X: 0, Y: 0},
+            {X: width, Y: 0},
+            {X: width, Y: height},
+            {X: 0, Y: height}
         ]
+    }
+
+    transformShapeForViewport(shape: Shape): Shape {
+        return shape.map(v => this.transformPointForViewport(v))
     }
 
     // collision
@@ -204,29 +214,25 @@ export class Game {
 
     // cannon
     
-    readonly cannonWidth = 10
-    readonly cannonHeight = 5
-    readonly cannonSpeed = 0.5
-
     initCannon() : Point {
         return {
-            X: this.gameAreaWidth / 2 - this.cannonWidth / 2, 
-            Y: this.gameAreaHeight - this.cannonHeight
+            X: this.gameAreaWidth / 2 - Constants.CANNON_WIDTH / 2, 
+            Y: this.gameAreaHeight - Constants.CANNON_HEIGHT
         }
     }
 
     moveCannonRight() : void {
-        if (this.gameState.cannonPosition.X >= this.gameAreaWidth - this.cannonWidth) {
+        if (this.gameState.cannonPosition.X >= this.gameAreaWidth - Constants.CANNON_WIDTH) {
             this.gameState.cannonPosition = { 
                 ...this.gameState.cannonPosition, 
-                X: this.gameAreaWidth - this.cannonWidth 
+                X: this.gameAreaWidth - Constants.CANNON_WIDTH 
             }
             return
         }
 
         this.gameState.cannonPosition = {
             ... this.gameState.cannonPosition,
-            X: this.gameState.cannonPosition.X + this.cannonSpeed
+            X: this.gameState.cannonPosition.X + Constants.CANNON_SPEED
         }
     }
 
@@ -241,16 +247,11 @@ export class Game {
 
         this.gameState.cannonPosition = {
             ... this.gameState.cannonPosition,
-            X: this.gameState.cannonPosition.X - this.cannonSpeed
+            X: this.gameState.cannonPosition.X - Constants.CANNON_SPEED
         }
     }
 
-
     // cannon bullets
-
-    readonly bulletWidth = 1 
-    readonly bulletHeight = 2
-    readonly bulletMoveSpeed = 0.5
 
     shoot(): void {
         if (this.gameState.bulletReady == false)
@@ -262,8 +263,8 @@ export class Game {
     
     spawnBullet(): void {
         const bullet = {
-            X: this.gameState.cannonPosition.X + this.cannonWidth / 2,
-            Y: this.gameState.cannonPosition.Y - this.bulletHeight
+            X: this.gameState.cannonPosition.X + Constants.CANNON_WIDTH / 2,
+            Y: this.gameState.cannonPosition.Y - Constants.BULLET_HEIGHT
         }
 
         this.gameState.bullets.push(bullet)
@@ -280,7 +281,7 @@ export class Game {
         for (let i = 0; i < this.gameState.bullets.length; i++) {
             this.gameState.bullets[i] = {
                 ... this.gameState.bullets[i],
-                Y: (this.gameState.bullets[i].Y - this.bulletMoveSpeed)
+                Y: (this.gameState.bullets[i].Y - Constants.BULLET_MOVE_SPEED)
             }
 
             if (this.gameState.bullets[i].Y <= 0) toDestroy.push(i)
@@ -290,11 +291,11 @@ export class Game {
                 for (let j = 0; j < activeInvaders.length; j++) {
                 const hasCollision = this.checkCollision(
                     this.gameState.bullets[i], 
-                    this.bulletWidth,
-                    this.bulletHeight,
+                    Constants.BULLET_WIDTH,
+                    Constants.BULLET_HEIGHT,
                     activeInvaders[j]!.position,
-                    this.invaderWidth,
-                    this.invaderHeight)
+                    Constants.INVADER_WIDTH,
+                    Constants.INVADER_HEIGHT)
 
      
                 if (hasCollision) {
@@ -379,7 +380,7 @@ export class Game {
         if (shooter == null) return
 
         const bullet = {
-            X: shooter.position.X + this.invaderWidth / 2,
+            X: shooter.position.X + Constants.INVADER_WIDTH / 2,
             Y: shooter.position.Y + this.invaderBulletHeight
         }
 
@@ -404,8 +405,8 @@ export class Game {
             const cannon = this.gameState.cannonPosition
             const hasCollision = this.checkCollision(
                cannon,
-               this.cannonWidth,
-               this.cannonHeight,
+               Constants.CANNON_WIDTH,
+               Constants.CANNON_HEIGHT,
                this.gameState.invaderBullets[i],
                this.invaderBulletWidth,
                this.invaderBulletHeight)
@@ -422,12 +423,6 @@ export class Game {
     }
 
     // invaders
-
-    readonly invaderWidth = 5
-    readonly invaderHeight = 5
-    readonly invaderSpeed = 0.1
-    readonly invaderVerticalSpeed = 5
-    readonly invaderRowLength = 11
 
     spawnLargeInvaderAt(position: Point): LargeInvader {
         return this.spawnInvaderAt<LargeInvader>(position, 1, 10)
@@ -447,12 +442,12 @@ export class Game {
 
     initInvaders(): InvadersGrid {
         const invadersGrid = Array<Array<LargeInvader | MediumInvader | SmallInvader | null>>(5)
-            .fill(Array<LargeInvader | MediumInvader | SmallInvader | null>(this.invaderRowLength).fill(null)) as InvadersGrid
+            .fill(Array<LargeInvader | MediumInvader | SmallInvader | null>(Constants.INVADER_ROW_LENGTH).fill(null)) as InvadersGrid
 
-        const verticalGap = 1
+        const verticalGap = 7
 
         const firstPositionInRow = 
-            (this.gameAreaWidth - (this.invaderWidth * this.invaderRowLength + (this.invaderWidth / 2) * (this.invaderRowLength - 1))) / 2
+            (this.gameAreaWidth - (Constants.INVADER_WIDTH * Constants.INVADER_ROW_LENGTH + (Constants.INVADER_WIDTH / 2) * (Constants.INVADER_ROW_LENGTH - 1))) / 2
         let curY = 10
 
         for (let r = 0; r < 5; r++) {
@@ -465,10 +460,10 @@ export class Game {
                         : (p: Point) => this.spawnSmallInvaderAt(p)
 
             let row = []
-            for (let i = 0; i < this.invaderRowLength; i++) {
-                row.push(spawner({X: curX, Y: curY + r * (this.invaderHeight + verticalGap)}))
+            for (let i = 0; i < Constants.INVADER_ROW_LENGTH; i++) {
+                row.push(spawner({X: curX, Y: curY + r * (Constants.INVADER_HEIGHT + verticalGap)}))
 
-                curX = curX + this.invaderWidth + this.invaderWidth / 2
+                curX = curX + Constants.INVADER_WIDTH + Constants.INVADER_WIDTH / 2
             }
             invadersGrid[r] = row
         }
@@ -507,7 +502,7 @@ export class Game {
 
             for (let i = 0; i < invaders.length; i++) {
                 const position = invaders[i]!.position
-                position.X += invadersDirection * this.invaderSpeed
+                position.X += invadersDirection * Constants.INVADER_SPEED
 
                 if (position.X < minX)
                 minX = position.X
@@ -516,7 +511,7 @@ export class Game {
                 maxX = position.X
 
                 if (invadersDirection == 1) {
-                    if (maxX + this.invaderWidth >= this.gameAreaWidth) {
+                    if (maxX + Constants.INVADER_WIDTH >= this.gameAreaWidth) {
                         directionChanged = true 
                         break
                     }
@@ -536,7 +531,7 @@ export class Game {
                 const invaders = invadersGrid[r].filter(a => a != null)
 
                 for (let i = 0; i < invaders.length; i++) {
-                    invaders[i]!.position.Y += this.invaderVerticalSpeed
+                    invaders[i]!.position.Y += Constants.INVADER_VERTICAL_SPEED
                 }
             }
 
@@ -560,12 +555,150 @@ export class Game {
             const invaders = invadersGrid[r].filter(a => a != null)
 
             for (let i = 0; i < invaders.length; i++) {
-                this.renderGameObject(invaders[i]!.position, this.invaderWidth, this.invaderHeight)
+                const startPosition = this.transformPointForViewport(invaders[i]!.position)
+
+                const shapes = this.getLargeInvaderShape()
+                for (const shape of shapes) {
+                   const vShape = this.transformShapeForViewport(shape) 
+                    this.viewport.render(startPosition, vShape)
+                }
+
+                this.renderGameObjectHitBox(invaders[i]!.position, Constants.INVADER_WIDTH, Constants.INVADER_HEIGHT)
             }
         }
     }
 
+
+
+    /// cannon shape
     
+    getCannonShape(): Shape {
+        const shape = []
+
+        shape.push({X: 6, Y: 0})
+        shape.push({X: 7, Y: 0})
+        shape.push({X: 7, Y: 1})
+        shape.push({X: 8, Y: 1})
+        shape.push({X: 8, Y: 3})
+        shape.push({X: 12, Y: 3})
+        shape.push({X: 12, Y: 4})
+        shape.push({X: 13, Y: 4})
+        shape.push({X: 13, Y: 7})
+        shape.push({X: 0, Y: 7})
+        shape.push({X: 0, Y: 4})
+        shape.push({X: 1, Y: 4})
+        shape.push({X: 1, Y: 3})
+        shape.push({X: 5, Y: 3})
+        shape.push({X: 5, Y: 2}) 
+        shape.push({X: 5, Y: 1}) 
+        shape.push({X: 6, Y: 1})
+
+        return shape
+    }
+
+
+    /// invader shape
+    
+    getLargeInvaderShape(): Array<Shape>{
+        const shapes: Array<Shape> = []
+
+        const top: Shape = []
+        top.push({X: 4, Y: 0})
+        top.push({X: 8, Y: 0})
+        top.push({X: 8, Y: 1})
+        top.push({X: 11, Y: 1})
+        top.push({X: 11, Y: 2})
+        top.push({X: 12, Y: 2})
+        top.push({X: 12, Y: 3})
+        top.push({X: 0, Y: 3})
+        top.push({X: 0, Y: 2})
+        top.push({X: 1, Y: 2})
+        top.push({X: 1, Y: 1})
+        top.push({X: 4, Y: 1})
+        
+        const leftEye: Shape = []
+        leftEye.push({X: 0, Y: 3})
+        leftEye.push({X: 3, Y: 3})
+        leftEye.push({X: 3, Y: 4})
+        leftEye.push({X: 0, Y: 4})
+
+        const rightEye: Shape = []
+        rightEye.push({X: 9, Y: 3})
+        rightEye.push({X: 12, Y: 3})
+        rightEye.push({X: 12, Y: 4})
+        rightEye.push({X: 9, Y: 4})
+
+        const middleEye: Shape = []
+        middleEye.push({X: 5, Y: 3})
+        middleEye.push({X: 7, Y: 3})
+        middleEye.push({X: 7, Y: 4})
+        middleEye.push({X: 5, Y: 4})
+
+        const bottom: Shape = []
+        bottom.push({X: 0, Y: 4})
+        bottom.push({X: 12, Y: 4})
+        bottom.push({X: 12, Y: 5})
+        bottom.push({X: 0, Y: 5})
+
+        const bottomLeft: Shape = []
+        bottomLeft.push({X: 2, Y: 5})
+        bottomLeft.push({X: 5, Y: 5})
+        bottomLeft.push({X: 5, Y: 6})
+        bottomLeft.push({X: 2, Y: 6})
+
+        const bottomRight: Shape = []
+        bottomRight.push({X: 7, Y: 5})
+        bottomRight.push({X: 10, Y: 5})
+        bottomRight.push({X: 10, Y: 6})
+        bottomRight.push({X: 7, Y: 6})
+
+        const jaw: Shape = []
+        jaw.push({X: 5, Y: 6})
+        jaw.push({X: 7, Y: 6})
+        jaw.push({X: 7, Y: 7})
+        jaw.push({X: 5, Y: 7})
+
+        const leftLeg: Shape = []
+        leftLeg.push({X: 1, Y: 6})
+        leftLeg.push({X: 3, Y: 6})
+        leftLeg.push({X: 3, Y: 7})
+        leftLeg.push({X: 1, Y: 7})
+
+        const leftLeg2: Shape = []
+        leftLeg2.push({X: 2, Y: 7})
+        leftLeg2.push({X: 4, Y: 7})
+        leftLeg2.push({X: 4, Y: 8})
+        leftLeg2.push({X: 2, Y: 8})
+
+        const rightLeg: Shape = []
+        rightLeg.push({X: 9, Y: 6})
+        rightLeg.push({X: 11, Y: 6})
+        rightLeg.push({X: 11, Y: 7})
+        rightLeg.push({X: 9, Y: 7})
+
+        const rightLeg2: Shape = []
+        rightLeg2.push({X: 8, Y: 7})
+        rightLeg2.push({X: 10, Y: 7})
+        rightLeg2.push({X: 10, Y: 8})
+        rightLeg2.push({X: 8, Y: 8})
+
+        shapes.push(top)
+        shapes.push(leftEye)
+        shapes.push(rightEye)
+        shapes.push(middleEye)
+        shapes.push(bottom)
+        shapes.push(bottomLeft)
+        shapes.push(bottomRight)
+        shapes.push(jaw)
+        shapes.push(leftLeg)
+        shapes.push(leftLeg2)
+        shapes.push(rightLeg)
+        shapes.push(rightLeg2)
+
+        return shapes
+    }
+
+
     // keymap
     
     initKeymap(): void {

@@ -1,0 +1,61 @@
+import type { Point } from "./Point"
+
+// game area
+
+const GAME_AREA_WIDTH = 250
+const GAME_AREA_HEIGHT = 150
+
+// Menu
+
+const LIVES_TITLE_POSITION: Point = {X: 50, Y: 5}
+const LIVES_INITIAL_POSITION: Point = {X: 80, Y: 2}
+
+const SCORE_TITLE_POSITION: Point = {X: 3, Y: 5} 
+const SCORE_VALUE_POSITION: Point = {X: 20, Y: 5}
+const SCORE_TEXT = "SCORE"
+
+const GAME_OVER_POSITION: Point = { X: 20, Y: 50 }
+const GAME_OVER_TEXT = "GAME OVER"
+
+// cannon
+
+const CANNON_WIDTH = 13
+const CANNON_HEIGHT = 7
+const CANNON_SPEED = 0.5
+
+// cannon bullet
+
+const BULLET_WIDTH = 1 
+const BULLET_HEIGHT = 2
+const BULLET_MOVE_SPEED = 0.5
+
+// invader
+
+const INVADER_WIDTH = 12
+const INVADER_HEIGHT = 8
+const INVADER_ROW_LENGTH = 11
+const INVADER_SPEED = 0.1
+const INVADER_VERTICAL_SPEED = 5
+
+export {
+    GAME_AREA_WIDTH,
+    GAME_AREA_HEIGHT,
+    LIVES_TITLE_POSITION,
+    LIVES_INITIAL_POSITION,
+    SCORE_TITLE_POSITION,
+    SCORE_VALUE_POSITION,
+    SCORE_TEXT,
+    GAME_OVER_POSITION,
+    GAME_OVER_TEXT,
+    CANNON_SPEED,
+    CANNON_WIDTH,
+    CANNON_HEIGHT,
+    INVADER_SPEED,
+    INVADER_VERTICAL_SPEED,
+    INVADER_ROW_LENGTH,
+    INVADER_WIDTH,
+    INVADER_HEIGHT,
+    BULLET_WIDTH,
+    BULLET_HEIGHT,
+    BULLET_MOVE_SPEED
+}

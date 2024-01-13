@@ -9,7 +9,19 @@ export class CanvasViewport implements IViewport {
         this.canvasContext = canvasContext
     }
 
+    public renderBorder(pos: Point, shape: Shape): void {
+        this.renderInternal(pos, shape)
+        this.canvasContext.strokeStyle = "yellow"
+        this.canvasContext.stroke()
+    }
+
     public render(pos: Point, shape: Shape): void {
+        this.renderInternal(pos, shape)
+        this.canvasContext.fillStyle = "white"
+        this.canvasContext.fill()
+    }
+
+    private renderInternal(pos: Point, shape: Shape): void {
         const getX = (idx: number) => pos.X + shape[idx].X;
         const getY = (idx: number) => pos.Y + shape[idx].Y;
 
@@ -24,8 +36,6 @@ export class CanvasViewport implements IViewport {
         }
 
         this.canvasContext.lineTo(getX(0), getY(0))
-        this.canvasContext.fillStyle = "white"
-        this.canvasContext.fill()
     }
 
     public renderText(pos: Point, text: string, style: number): void {

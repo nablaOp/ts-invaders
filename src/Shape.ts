@@ -1,4 +1,4 @@
-import type { Position } from './Position'
+import type { Point } from './Point'
 
-export type Shape = Array<Position>
+export type Shape = Array<Point>
 
