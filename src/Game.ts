@@ -46,6 +46,7 @@ export class Game {
         this.renderCannon()
         this.renderBullets()
         this.renderInvaders()
+        this.renderInvaderBullets()
     }
     
     resetViewport(): void {
@@ -58,7 +59,19 @@ export class Game {
 
     renderBullets(): void {
         for (let i = 0; i < this.gameState.bullets.length; i++) {
-            this.renderGameObject(this.gameState.bullets[i], this.bulletWidth, this.bulletHeight)
+            this.renderGameObject(
+                this.gameState.bullets[i], 
+                this.bulletWidth, 
+                this.bulletHeight)
+        }
+    }
+
+    renderInvaderBullets(): void {
+        for (let i = 0; i < this.gameState.invaderBullets.length; i++) {
+            this.renderGameObject(
+                this.gameState.invaderBullets[i], 
+                this.invaderBulletWidth,
+                this.invaderBulletHeight)
         }
     }
 
@@ -82,7 +95,9 @@ export class Game {
             bulletReady: false,
             bullets: [],
             invadersGrid: this.initInvaders(),
-            invadersDirection: 1
+            invadersDirection: 1,
+            invaderBulletReady: false,
+            invaderBullets: []
         }
     }
 
@@ -92,6 +107,8 @@ export class Game {
         this.shoot()
         this.updateBullets()
         this.updateInvaders()
+        this.invaderShoot()
+        this.updateInvaderBullets()
     }
 
     // viewport 
@@ -244,6 +261,119 @@ export class Game {
 
     // invader bullets
     
+    findInvadersReadyToShoot(): Array<[number, number]> {
+        let result: Array<[number, number]> = []
+
+        for (let r = 0; r < this.gameState.invadersGrid.length; r++) {
+            const row = this.gameState.invadersGrid[r]
+
+            for (let i = 0; i < row.length; i++) {
+                if (row[i] == null) continue;
+
+                if (r == this.gameState.invadersGrid.length - 1) {
+                    result.push([r, i])
+                }
+
+                let hasFreePath = true;
+                for (let pr = r + 1; pr < this.gameState.invadersGrid.length; pr++) {
+                    if (this.gameState.invadersGrid[pr][i] != null) {
+                        hasFreePath = false
+                        break
+                        }
+                }
+
+                if (hasFreePath) {
+                    result.push([r, i])
+                }
+            }
+        }
+
+        return result
+    }
+
+    getNextInvaderToShoot(): Invader | null {
+        const readyToShoot = this.findInvadersReadyToShoot()
+
+        if (readyToShoot.length == 0) return null
+
+        const rnd = Math.floor(Math.random() * readyToShoot.length)
+        const [r, i] = readyToShoot[rnd]
+
+        return this.gameState.invadersGrid[r][i]
+    }
+
+    readonly invaderBulletWidth = 1 
+    readonly invaderBulletHeight = 2
+    readonly invaderBulletMoveSpeed = 0.5
+
+    invaderShoot(): void {
+        this.gameState.invaderBulletReady = this.gameState.invaderBullets.length == 0
+
+        if (this.gameState.invaderBulletReady == false)
+            return
+
+        this.spawnInvaderBullet()
+        this.gameState.invaderBulletReady = false
+    }
+    
+    spawnInvaderBullet(): void {
+        const shooter = this.getNextInvaderToShoot()
+
+        if (shooter == null) return
+
+        const bullet = {
+            X: shooter.position.X + this.invaderWidth / 2,
+            Y: shooter.position.Y + this.invaderBulletHeight
+        }
+
+        this.gameState.invaderBullets.push(bullet)
+    }
+
+    destroyInvaderBullet(idx: number): void {
+        this.gameState.invaderBullets = this.gameState.invaderBullets.filter((_, i) => i != idx)
+    }
+
+    updateInvaderBullets(): void {
+        let toDestroy = [] 
+        // let invaderToDestroy : Array<[number, number]> = []
+
+        for (let i = 0; i < this.gameState.invaderBullets.length; i++) {
+            this.gameState.invaderBullets[i] = {
+                ... this.gameState.invaderBullets[i],
+                Y: (this.gameState.invaderBullets[i].Y + this.invaderBulletMoveSpeed)
+            }
+
+            if (this.gameState.invaderBullets[i].Y >= this.gameAreaHeight) toDestroy.push(i)
+
+     //        for (let r = 0; r < this.gameState.invadersGrid.length; r++) {
+     //            const activeInvaders = this.gameState.invadersGrid[r].filter(a => a != null)
+     //            for (let j = 0; j < activeInvaders.length; j++) {
+     //            const hasCollision = this.checkCollision(
+     //                this.gameState.bullets[i], 
+     //                this.bulletWidth,
+     //                this.bulletHeight,
+     //                activeInvaders[j]!.position,
+     //                this.invaderWidth,
+     //                this.invaderHeight)
+     //
+     // 
+     //            if (hasCollision) {
+     //                toDestroy.push(i)
+     //                invaderToDestroy.push([r, j])
+     //                break
+     //            }
+     //        }
+     //        }
+        }
+
+        for (let i = 0; i < toDestroy.length; i++) {
+            this.destroyInvaderBullet(toDestroy[i])
+        }
+
+        // for (let j = 0; j < invaderToDestroy.length; j++) {
+        //     this.destroyInvader(invaderToDestroy[j])
+        // }
+    }
 
     // invaders
 
@@ -444,6 +574,8 @@ type GameState = {
 
     invadersDirection: number
     invadersGrid: InvadersGrid 
+    invaderBulletReady: boolean
+    invaderBullets: Array<Point>
 }
 
 type GameObject = {}
