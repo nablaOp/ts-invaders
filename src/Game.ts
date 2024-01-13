@@ -2,6 +2,16 @@ import type { Point } from './Point'
 import type { Shape } from './Shape'
 import { IViewport } from './IViewport'
 
+
+// TODO:
+// - fix invader - bullet collision
+// - add cannon - bullet collision
+// - add top menu
+// - adjust speed
+// - add invader animation
+// - add defense
+// - add ufo
+
 export class Game {
     gameAreaViewportWidth: number
     gameAreaViewportHeight: number
@@ -37,6 +47,11 @@ export class Game {
         setInterval(async () => {
             this.render()
         }, this.msPerFrame)
+    }
+
+    gameOver(): boolean { 
+        return this.gameState.cannonHitpoints == 0 || 
+            this.gameState.invadersGrid.every(r => r.every(i => i == null))
     }
 
     // render 
@@ -90,6 +105,7 @@ export class Game {
     initGameState() : GameState {
         return {
             cannonPosition: this.initCannon(),
+            cannonHitpoints: 3,
             rightArrowPressed: false,
             leftArrowPressed: false,
             bulletReady: false,
@@ -102,6 +118,8 @@ export class Game {
     }
 
     update(): void {
+        if (this.gameOver()) return
+
         if (this.gameState.rightArrowPressed) this.moveCannonRight()
         if (this.gameState.leftArrowPressed) this.moveCannonLeft()
         this.shoot()
@@ -335,7 +353,6 @@ export class Game {
 
     updateInvaderBullets(): void {
         let toDestroy = [] 
-        // let invaderToDestroy : Array<[number, number]> = []
 
         for (let i = 0; i < this.gameState.invaderBullets.length; i++) {
             this.gameState.invaderBullets[i] = {
@@ -345,34 +362,24 @@ export class Game {
 
             if (this.gameState.invaderBullets[i].Y >= this.gameAreaHeight) toDestroy.push(i)
 
-     //        for (let r = 0; r < this.gameState.invadersGrid.length; r++) {
-     //            const activeInvaders = this.gameState.invadersGrid[r].filter(a => a != null)
-     //            for (let j = 0; j < activeInvaders.length; j++) {
-     //            const hasCollision = this.checkCollision(
-     //                this.gameState.bullets[i], 
-     //                this.bulletWidth,
-     //                this.bulletHeight,
-     //                activeInvaders[j]!.position,
-     //                this.invaderWidth,
-     //                this.invaderHeight)
-     //
-     // 
-     //            if (hasCollision) {
-     //                toDestroy.push(i)
-     //                invaderToDestroy.push([r, j])
-     //                break
-     //            }
-     //        }
-     //        }
+            const cannon = this.gameState.cannonPosition
+            const hasCollision = this.checkCollision(
+               cannon,
+               this.cannonWidth,
+               this.cannonHeight,
+               this.gameState.invaderBullets[i],
+               this.invaderBulletWidth,
+               this.invaderBulletHeight)
+
+            if (hasCollision) {
+                toDestroy.push(i)
+                this.gameState.cannonHitpoints -= 1
+            }
         }
 
         for (let i = 0; i < toDestroy.length; i++) {
             this.destroyInvaderBullet(toDestroy[i])
         }
-
-        // for (let j = 0; j < invaderToDestroy.length; j++) {
-        //     this.destroyInvader(invaderToDestroy[j])
-        // }
     }
 
     // invaders
@@ -566,6 +573,7 @@ export class Game {
 
 type GameState = {
     cannonPosition: Point
+    cannonHitpoints: number
     rightArrowPressed: boolean
     leftArrowPressed: boolean
 
