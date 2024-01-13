@@ -1,7 +1,8 @@
-import type { Position } from "./Position";
+import type { Point } from "./Point";
 import type { Shape } from "./Shape";
 
 export interface IViewport {
-    render(pos: Position, shape: Shape): void
+    render(pos: Point, shape: Shape): void
+    renderText(pos: Point, text: string, style: number): void
     reset(): void
 }

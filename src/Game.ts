@@ -1,11 +1,11 @@
 import type { Point } from './Point'
 import type { Shape } from './Shape'
 import { IViewport } from './IViewport'
+import { MD4, MD5 } from 'bun'
 
 
 // TODO:
 // - fix invader - bullet collision
-// - add cannon - bullet collision
 // - add top menu
 // - adjust speed
 // - add invader animation
@@ -58,12 +58,49 @@ export class Game {
     
     render(): void {
         this.resetViewport()
+        
+        this.renderScore()
+        this.renderLives()
+        
         this.renderCannon()
         this.renderBullets()
         this.renderInvaders()
         this.renderInvaderBullets()
+
+        this.renderGameOver()
     }
-    
+
+    renderLives(): void {
+        const titlePos: Point = { X: 65, Y: 5 }
+        this.viewport.renderText(this.adjustPositionToViewport(titlePos), "LIVES", 0)
+        
+        const width = 5
+        const height = 3
+
+        const y = 2
+        let x = 80
+
+        for (let i = 0; i < this.gameState.cannonHitpoints; i++) {
+            this.renderGameObject({X: x, Y: y}, width, height)
+            x += width + 1
+        }
+    }
+
+    renderScore(): void {
+        const titlePos: Point = { X: 3, Y: 5 }
+        const scorePos: Point = { X: 20, Y: 5 } 
+
+        this.viewport.renderText(this.adjustPositionToViewport(titlePos), "SCORE", 0)
+        this.viewport.renderText(this.adjustPositionToViewport(scorePos), this.gameState.score.toString(), 1) 
+    }
+
+    renderGameOver(): void {
+        if (!this.gameOver()) return
+
+        const pos: Point = { X: 20, Y: 50 }
+        this.viewport.renderText(this.adjustPositionToViewport(pos), "GAME OVER", 2)
+    }
+
     resetViewport(): void {
         this.viewport.reset()
     }
@@ -104,6 +141,7 @@ export class Game {
     
     initGameState() : GameState {
         return {
+            score: 0,
             cannonPosition: this.initCannon(),
             cannonHitpoints: 3,
             rightArrowPressed: false,
@@ -261,6 +299,7 @@ export class Game {
      
                 if (hasCollision) {
                     toDestroy.push(i)
+                    this.gameState.score += this.gameState.invadersGrid[r][j]?.score
                     invaderToDestroy.push([r, j])
                     break
                 }
@@ -572,6 +611,8 @@ export class Game {
 
 
 type GameState = {
+    score: number, 
+
     cannonPosition: Point
     cannonHitpoints: number
     rightArrowPressed: boolean

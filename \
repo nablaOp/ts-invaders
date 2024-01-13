@@ -38,13 +38,9 @@ export class CanvasViewport implements IViewport {
     }
 
     private setStyle(style: number): void {
-        this.canvasContext.font = '12pt Courier Regular'
+        this.canvasContext.font = '40pt Calibri'
+        this.canvasContext.fillStyle = 'blue'     
         switch (style) {
-            case 2: {
-                this.canvasContext.font = '30pt Courier Regular'
-                this.canvasContext.fillStyle = "green"
-                break
-            }
             case 1: { 
                 this.canvasContext.fillStyle = "green"
                 break
