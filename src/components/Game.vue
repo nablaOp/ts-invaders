@@ -4,8 +4,8 @@ import { Game } from '../Game'
 import { IViewport } from '../IViewport'
 import { CanvasViewport } from '../CanvasViewport'
 
-const width = ref(400)
-const height = ref(400)
+const width = ref(640)
+const height = ref(480)
 
 const gameCanvas = ref<HTMLCanvasElement>()
 const canvasContext = computed(() => gameCanvas.value?.getContext('2d'))
