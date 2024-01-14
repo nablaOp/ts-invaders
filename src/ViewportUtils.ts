@@ -20,11 +20,11 @@ export const transformShapeForViewport = (gameState: GameState, shape: Shape): S
 }
 
 export const renderGameObjectHitBox = (gameState: GameState, position: Point, width: number, height: number): void => {
-    const vPosition = transformPointForViewport(gameState, position)
-    const hitBox = buildHitBox(width, height)
-    const vHitBox = transformShapeForViewport(gameState, hitBox)
-
-    renderHitBox(gameState, vPosition, vHitBox)
+    // const vPosition = transformPointForViewport(gameState, position)
+    // const hitBox = buildHitBox(width, height)
+    // const vHitBox = transformShapeForViewport(gameState, hitBox)
+    //
+    // renderHitBox(gameState, vPosition, vHitBox)
 }
 
 const buildHitBox = (width: number, height: number): Shape => {

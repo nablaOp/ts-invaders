@@ -1,7 +1,8 @@
 import type { Point } from './Point'
+import type { Shape } from './Shape'
 import type { GameState, Invader, LargeInvader, MediumInvader, SmallInvader, InvadersGrid } from './Types'
 import * as Constants from './Constants'
-import { renderGameObjectHitBox } from './ViewportUtils'
+import { renderGameObjectHitBox, transformPointForViewport, transformShapeForViewport } from './ViewportUtils'
 
 export const InvadersActor = {
     init(): InvadersGrid {
@@ -116,13 +117,12 @@ export const InvadersActor = {
             const invaders = invadersGrid[r].filter(a => a != null)
 
             for (let i = 0; i < invaders.length; i++) {
-                // const startPosition = this.transformPointForViewport(invaders[i]!.position)
+                const startPosition = transformPointForViewport(gameState, invaders[i]!.position)
 
-                // const shapes = this.getLargeInvaderShape()
-                // for (const shape of shapes) {
-                //    const vShape = this.transformShapeForViewport(shape) 
-                //     this.viewport.render(startPosition, vShape)
-                // }
+                for (const shape of largeInvaderShape) {
+                   const vShape = transformShapeForViewport(gameState, shape) 
+                    gameState.viewport.render(startPosition, vShape)
+                }
 
                 renderGameObjectHitBox(
                     gameState, 
@@ -155,3 +155,75 @@ const spawnInvaderAt = <T extends Invader>(position: Point, hitpoints: number, s
     return { position, hitpoints, score } as T
 }
 
+const largeInvaderShape: Array<Shape> = [ 
+    [
+        {X: 4, Y: 0},
+        {X: 8, Y: 0},
+        {X: 8, Y: 1},
+        {X: 11, Y: 1},
+        {X: 11, Y: 2},
+        {X: 12, Y: 2},
+        {X: 12, Y: 3},
+        {X: 0, Y: 3},
+        {X: 0, Y: 2},
+        {X: 1, Y: 2},
+        {X: 1, Y: 1},
+        {X: 4, Y: 1},
+    ],    
+    [
+        {X: 0, Y: 3},
+        {X: 3, Y: 3},
+        {X: 3, Y: 4},
+        {X: 0, Y: 4},
+    ], [
+        {X: 9, Y: 3},
+        {X: 12, Y: 3},
+        {X: 12, Y: 4},
+        {X: 9, Y: 4},
+    ],[
+        {X: 5, Y: 3},
+        {X: 7, Y: 3},
+        {X: 7, Y: 4},
+        {X: 5, Y: 4},
+    ],[
+        {X: 0, Y: 4},
+        {X: 12, Y: 4},
+        {X: 12, Y: 5},
+        {X: 0, Y: 5},
+    ],[
+        {X: 2, Y: 5},
+        {X: 5, Y: 5},
+        {X: 5, Y: 6},
+        {X: 2, Y: 6},
+    ],[
+        {X: 7, Y: 5},
+        {X: 10, Y: 5},
+        {X: 10, Y: 6},
+        {X: 7, Y: 6},
+    ],[
+        {X: 5, Y: 6},
+        {X: 7, Y: 6},
+        {X: 7, Y: 7},
+        {X: 5, Y: 7},
+    ],[
+        {X: 1, Y: 6},
+        {X: 3, Y: 6},
+        {X: 3, Y: 7},
+        {X: 1, Y: 7},
+    ],[
+        {X: 2, Y: 7},
+        {X: 4, Y: 7},
+        {X: 4, Y: 8},
+        {X: 2, Y: 8},
+    ],[
+        {X: 9, Y: 6},
+        {X: 11, Y: 6},
+        {X: 11, Y: 7},
+        {X: 9, Y: 7},
+    ],[
+        {X: 8, Y: 7},
+        {X: 10, Y: 7},
+        {X: 10, Y: 8},
+        {X: 8, Y: 8},
+    ]
+]

@@ -3,6 +3,7 @@ import type { GameState } from './Types'
 import { gameOver } from './Types'
 import * as Constants from './Constants'
 import { transformPointForViewport, renderGameObjectHitBox } from './ViewportUtils'
+import { CannonActor } from './Cannon'
 
 export const StatusBarActor = {
     render(gameState: GameState): void {
@@ -22,9 +23,10 @@ const renderLives = (gameState: GameState): void => {
     let position = Constants.LIVES_INITIAL_POSITION
 
     for (let i = 0; i < gameState.cannonHitpoints; i++) {
-        // const startPosition = this.transformPointForViewport(position)
-        // const shape = this.getCannonShape().map(v => this.transformPointForViewport(v))
-        // this.viewport.render(startPosition, shape) 
+        const startPosition = transformPointForViewport(gameState, position)
+        const shape = CannonActor.getShape().map((v: Point) => transformPointForViewport(gameState, v))
+        gameState.viewport.render(startPosition, shape) 
+
         renderGameObjectHitBox(gameState, position, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT) 
         position =  { ...position, X: position.X + Constants.CANNON_WIDTH + 2 }
     }

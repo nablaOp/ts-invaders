@@ -1,15 +1,10 @@
 import * as Constants from './Constants'
 import type { GameState } from './Types'
 import type { Point } from './Point'
-import { renderGameObjectHitBox } from './ViewportUtils'
+import type { Shape } from './Shape'
+import { renderGameObjectHitBox, transformPointForViewport } from './ViewportUtils'
 
-export interface IGameObjectActor {
-    initAt(): Point,
-    update(gameState: GameState): void
-    render(gameState: GameState): void,
-}
-
-export const CannonActor: IGameObjectActor = {
+export const CannonActor = {
     initAt(): Point {
         return {
             X: Constants.GAME_AREA_WIDTH / 2 - Constants.CANNON_WIDTH / 2, 
@@ -27,12 +22,16 @@ export const CannonActor: IGameObjectActor = {
     },
 
     render(gameState: GameState): void {
-        // const startPosition = transformPointForViewport(this.gameState.cannonPosition)
-        // const shape = getCannonShape().map(v => this.transformPointForViewport(v))
+        const startPosition = transformPointForViewport(gameState, gameState.cannonPosition)
+        const vShape = shape.map((v: Point) => transformPointForViewport(gameState, v))
 
-        // viewport.render(startPosition, shape)
+        gameState.viewport.render(startPosition, vShape)
 
         renderGameObjectHitBox(gameState, gameState.cannonPosition, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT)
+    },
+
+    getShape(): Shape {
+        return shape
     }
 }
 
@@ -67,3 +66,22 @@ const moveCannonLeft = (gameState: GameState): void  => {
     }
 }
 
+const shape: Shape = [
+    {X: 6, Y: 0},
+    {X: 7, Y: 0},
+    {X: 7, Y: 1},
+    {X: 8, Y: 1},
+    {X: 8, Y: 3},
+    {X: 12, Y: 3},
+    {X: 12, Y: 4},
+    {X: 13, Y: 4},
+    {X: 13, Y: 7},
+    {X: 0, Y: 7},
+    {X: 0, Y: 4},
+    {X: 1, Y: 4},
+    {X: 1, Y: 3},
+    {X: 5, Y: 3},
+    {X: 5, Y: 2}, 
+    {X: 5, Y: 1}, 
+    {X: 6, Y: 1},
+]

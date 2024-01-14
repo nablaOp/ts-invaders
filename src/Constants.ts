@@ -30,7 +30,7 @@ const CANNON_SPEED = GAME_AREA_WIDTH / 300
 // cannon bullet
 
 const BULLET_WIDTH = 1 
-const BULLET_HEIGHT = 2
+const BULLET_HEIGHT = 5
 const BULLET_MOVE_SPEED = GAME_AREA_HEIGHT / 100
 
 // invader
@@ -46,7 +46,7 @@ const INVADER_VERTICAL_SPEED = 5
 // invader bullet
 
 const INVADER_BULLET_WIDTH = 1 
-const INVADER_BULLET_HEIGHT = 2
+const INVADER_BULLET_HEIGHT = 5
 const INVADER_BULLET_MOVE_SPEED = GAME_AREA_HEIGHT / 150
 
 export {

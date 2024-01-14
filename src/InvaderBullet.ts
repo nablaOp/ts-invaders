@@ -1,7 +1,8 @@
 import { Point } from './Point'
 import { GameState, Invader } from './Types'
 import * as Constants from './Constants'
-import { renderGameObjectHitBox } from './ViewportUtils'
+import { renderGameObjectHitBox, transformPointForViewport } from './ViewportUtils'
+import { Shape } from './Shape'
 
 export const InvaderBulletActor = {
     initAt(): Point | null {
@@ -29,6 +30,11 @@ export const InvaderBulletActor = {
 
     render(gameState: GameState): void {
         if (gameState.invaderBulletPosition == null) return 
+        
+        const startPosition = transformPointForViewport(gameState, gameState.invaderBulletPosition)
+        const vShape = shape.map((v: Point) => transformPointForViewport(gameState, v))
+
+        gameState.viewport.render(startPosition, vShape)
 
         renderGameObjectHitBox(
             gameState,
@@ -90,3 +96,10 @@ const spawnInvaderBullet = (gameState: GameState): void => {
         Y: shooter.position.Y + Constants.INVADER_BULLET_HEIGHT
     }
 }
+
+const shape: Shape = [
+    {X: 0, Y: 0},
+    {X: 1, Y: 0},
+    {X: 1, Y: 4},
+    {X: 0, Y: 4}
+]
