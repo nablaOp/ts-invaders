@@ -1,13 +1,15 @@
-import type { Point } from './Point'
 import type { Shape } from './Shape'
-import type { GameState, Invader } from './Types'
+import { gameOver, type GameState } from './Types'
 import { IViewport } from './IViewport'
 import * as Constants from './Constants'
 import { CannonActor } from './Cannon'
+import { CannonBulletActor } from './Bullet'
 import { InvadersActor } from './Invaders'
+import { InvaderBulletActor } from './InvaderBullet'
+import { StatusBarActor } from './StatusBar'
+import { CollisionResolver } from './CollisionResolver'
 
 // TODO:
-// - add top menu
 // - adjust speed
 // - add invader animation
 // - add defense
@@ -50,95 +52,6 @@ export class Game {
         }, this.msPerFrame)
     }
 
-    gameOver(): boolean { 
-        return this.gameState.cannonHitpoints == 0 || 
-            this.gameState.invadersGrid.every(r => r.every(i => i == null))
-    }
-
-    // render 
-    
-    render(): void {
-        this.resetViewport()
-        
-        this.renderScore()
-        this.renderLives()
-        
-        CannonActor.render(this.gameState)
-        this.renderBullets()
-        InvadersActor.render(this.gameState)
-        this.renderInvaderBullets()
-
-        this.renderGameOver()
-
-        this.renderGameObjectHitBox(this.gameState.cannonPosition, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT)
-    }
-
-    renderLives(): void {
-        const titlePos: Point = Constants.LIVES_TITLE_POSITION 
-        this.viewport.renderText(this.transformPointForViewport(titlePos), Constants.LIVES_TEXT, 0)
-
-        let position = Constants.LIVES_INITIAL_POSITION
-
-        for (let i = 0; i < this.gameState.cannonHitpoints; i++) {
-            // const startPosition = this.transformPointForViewport(position)
-            // const shape = this.getCannonShape().map(v => this.transformPointForViewport(v))
-            // this.viewport.render(startPosition, shape) 
-            this.renderGameObjectHitBox(position, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT) 
-            position =  { ...position, X: position.X + Constants.CANNON_WIDTH + 2 }
-        }
-    }
-
-    renderScore(): void {
-        const titlePos: Point = Constants.SCORE_TITLE_POSITION
-        const scorePos: Point = Constants.SCORE_VALUE_POSITION 
-
-        this.viewport.renderText(this.transformPointForViewport(titlePos), Constants.SCORE_TEXT, 0)
-        this.viewport.renderText(this.transformPointForViewport(scorePos), this.gameState.score.toString(), 1) 
-    }
-
-    renderGameOver(): void {
-        if (!this.gameOver()) return
-
-        const pos: Point = Constants.GAME_OVER_POSITION 
-        this.viewport.renderText(this.transformPointForViewport(pos), Constants.GAME_OVER_TEXT, 2)
-    }
-
-    resetViewport(): void {
-        this.viewport.reset()
-    }
-
-    renderBullets(): void {
-        for (let i = 0; i < this.gameState.bullets.length; i++) {
-            this.renderGameObjectHitBox(
-                this.gameState.bullets[i], 
-                Constants.BULLET_WIDTH, 
-                Constants.BULLET_HEIGHT)
-        }
-    }
-
-    renderInvaderBullets(): void {
-        for (let i = 0; i < this.gameState.invaderBullets.length; i++) {
-            this.renderGameObjectHitBox(
-                this.gameState.invaderBullets[i], 
-                Constants.INVADER_BULLET_WIDTH,
-                Constants.INVADER_BULLET_HEIGHT)
-        }
-    }
-
-    renderGameObjectHitBox(position: Point, width: number, height: number): void {
-        const vPosition = this.transformPointForViewport(position)
-        const hitBox = this.buildHitBox(width, height)
-        const vHitBox = this.transformShapeForViewport(hitBox)
-
-        this.renderHitBox(vPosition, vHitBox)
-    }
-
-    renderHitBox(position: Point, shape: Shape): void {
-        this.viewport.renderBorder(position, shape)
-    }
-    
-    // game state
-    
     initGameState(viewport: IViewport, width: number, height: number): GameState {
         return {
             viewport: viewport,
@@ -149,233 +62,39 @@ export class Game {
             cannonHitpoints: 3,
             rightArrowPressed: false,
             leftArrowPressed: false,
-            bulletReady: false,
-            bullets: [],
+            spacePressed: false,
+            cannonBulletPosition: CannonBulletActor.initAt(),
             invadersGrid: InvadersActor.init(),
             invadersDirection: 1,
-            invaderBulletReady: false,
-            invaderBullets: []
+            invaderBulletPosition: InvaderBulletActor.initAt()
         }
     }
 
     update(): void {
-        if (this.gameOver()) return
+        if (gameOver(this.gameState)) return
 
         CannonActor.update(this.gameState)
-
-        this.shoot()
-        this.updateBullets()
+        CannonBulletActor.update(this.gameState)
         InvadersActor.update(this.gameState)
-        this.invaderShoot()
-        this.updateInvaderBullets()
-    }
+        InvaderBulletActor.update(this.gameState)
 
-    // viewport 
-    
-    transformXForViewport(x: number): number {
-        return this.gameAreaViewportWidth * x / this.gameAreaWidth
-    }
-
-    transformYForViewport(y: number): number {
-        return this.gameAreaViewportHeight * y / this.gameAreaHeight
-    }
-
-    transformPointForViewport(position: Point) : Point {
-        return {X: this.transformXForViewport(position.X), Y: this.transformYForViewport(position.Y)}
-    }
-
-    buildHitBox(width: number, height: number): Shape {
-        return [
-            {X: 0, Y: 0},
-            {X: width, Y: 0},
-            {X: width, Y: height},
-            {X: 0, Y: height}
-        ]
-    }
-
-    transformShapeForViewport(shape: Shape): Shape {
-        return shape.map(v => this.transformPointForViewport(v))
-    }
-
-    // collision
-
-    checkCollision(p1: Point, width1: number, height1: number, p2: Point, width2: number, height2: number) {
-        const l1 = p1
-        const l2 = {X: p1.X + width1, Y: p1.Y + height1}
-        const r1 = p2
-        const r2 = {X: p2.X + width2, Y: p2.Y + height2}
-
-        return ((r1.X >= l1.X && r1.X <= l2.X && r1.Y >= l1.Y && r1.Y <= l2.Y) || 
-            (l1.X >= r1.X && l1.X <= r2.X && l1.Y >= r1.Y && l1.Y <= r2.Y))
-    }
-
-    // cannon bullets
-
-    shoot(): void {
-        if (this.gameState.bulletReady == false)
-            return
-
-        this.spawnBullet()
-        this.gameState.bulletReady = false
+        CollisionResolver.resolve(this.gameState)
     }
     
-    spawnBullet(): void {
-        const bullet = {
-            X: this.gameState.cannonPosition.X + Constants.CANNON_WIDTH / 2,
-            Y: this.gameState.cannonPosition.Y - Constants.BULLET_HEIGHT
-        }
+    render(): void {
+        this.resetViewport()
+        
+        StatusBarActor.render(this.gameState)
+        CannonActor.render(this.gameState)
+        CannonBulletActor.render(this.gameState)
+        InvadersActor.render(this.gameState)
+        InvaderBulletActor.render(this.gameState)
 
-        this.gameState.bullets.push(bullet)
+        StatusBarActor.renderGameOver(this.gameState)
     }
 
-    destroyBullet(idx: number): void {
-        this.gameState.bullets = this.gameState.bullets.filter((_, i) => i != idx)
-    }
-
-    updateBullets(): void {
-        let toDestroy = [] 
-        let invaderToDestroy : Array<[number, number]> = []
-
-        for (let i = 0; i < this.gameState.bullets.length; i++) {
-            this.gameState.bullets[i] = {
-                ... this.gameState.bullets[i],
-                Y: (this.gameState.bullets[i].Y - Constants.BULLET_MOVE_SPEED)
-            }
-
-            if (this.gameState.bullets[i].Y <= 0) toDestroy.push(i)
-
-            for (let r = 0; r < this.gameState.invadersGrid.length; r++) {
-                for (let j = 0; j < this.gameState.invadersGrid[r].length; j++) {
-                    if (this.gameState.invadersGrid[r][j] == null)
-                        continue
-
-                    const hasCollision = this.checkCollision(
-                        this.gameState.bullets[i], 
-                        Constants.BULLET_WIDTH,
-                        Constants.BULLET_HEIGHT,
-                        this.gameState.invadersGrid[r][j]!.position,
-                        Constants.INVADER_WIDTH,
-                        Constants.INVADER_HEIGHT)
-
-
-                    if (hasCollision) {
-                        toDestroy.push(i)
-                        this.gameState.score += this.gameState.invadersGrid[r][j]!.score
-                        invaderToDestroy.push([r, j])
-                        break
-                    }
-                }
-            }
-        }
-
-        for (let i = 0; i < toDestroy.length; i++) {
-            this.destroyBullet(toDestroy[i])
-        }
-
-        for (let j = 0; j < invaderToDestroy.length; j++) {
-            InvadersActor.destroy(this.gameState, invaderToDestroy[j])
-        }
-    }
-
-    // invader bullets
-    
-    findInvadersReadyToShoot(): Array<[number, number]> {
-        let result: Array<[number, number]> = []
-
-        for (let r = 0; r < this.gameState.invadersGrid.length; r++) {
-            const row = this.gameState.invadersGrid[r]
-
-            for (let i = 0; i < row.length; i++) {
-                if (row[i] == null) continue;
-
-                if (r == this.gameState.invadersGrid.length - 1) {
-                    result.push([r, i])
-                }
-
-                let hasFreePath = true;
-                for (let pr = r + 1; pr < this.gameState.invadersGrid.length; pr++) {
-                    if (this.gameState.invadersGrid[pr][i] != null) {
-                        hasFreePath = false
-                        break
-                        }
-                }
-
-                if (hasFreePath) {
-                    result.push([r, i])
-                }
-            }
-        }
-
-        return result
-    }
-
-    getNextInvaderToShoot(): Invader | null {
-        const readyToShoot = this.findInvadersReadyToShoot()
-
-        if (readyToShoot.length == 0) return null
-
-        const rnd = Math.floor(Math.random() * readyToShoot.length)
-        const [r, i] = readyToShoot[rnd]
-
-        return this.gameState.invadersGrid[r][i]
-    }
-
-    invaderShoot(): void {
-        this.gameState.invaderBulletReady = this.gameState.invaderBullets.length == 0
-
-        if (this.gameState.invaderBulletReady == false)
-            return
-
-        this.spawnInvaderBullet()
-        this.gameState.invaderBulletReady = false
-    }
-    
-    spawnInvaderBullet(): void {
-        const shooter = this.getNextInvaderToShoot()
-
-        if (shooter == null) return
-
-        const bullet = {
-            X: shooter.position.X + Constants.INVADER_WIDTH / 2,
-            Y: shooter.position.Y + Constants.INVADER_BULLET_HEIGHT
-        }
-
-        this.gameState.invaderBullets.push(bullet)
-    }
-
-    destroyInvaderBullet(idx: number): void {
-        this.gameState.invaderBullets = this.gameState.invaderBullets.filter((_, i) => i != idx)
-    }
-
-    updateInvaderBullets(): void {
-        let toDestroy = [] 
-
-        for (let i = 0; i < this.gameState.invaderBullets.length; i++) {
-            this.gameState.invaderBullets[i] = {
-                ... this.gameState.invaderBullets[i],
-                Y: (this.gameState.invaderBullets[i].Y + Constants.INVADER_BULLET_MOVE_SPEED)
-            }
-
-            if (this.gameState.invaderBullets[i].Y >= this.gameAreaHeight) toDestroy.push(i)
-
-            const cannon = this.gameState.cannonPosition
-            const hasCollision = this.checkCollision(
-               cannon,
-               Constants.CANNON_WIDTH,
-               Constants.CANNON_HEIGHT,
-               this.gameState.invaderBullets[i],
-               Constants.INVADER_BULLET_WIDTH,
-               Constants.INVADER_BULLET_HEIGHT)
-
-            if (hasCollision) {
-                toDestroy.push(i)
-                this.gameState.cannonHitpoints -= 1
-            }
-        }
-
-        for (let i = 0; i < toDestroy.length; i++) {
-            this.destroyInvaderBullet(toDestroy[i])
-        }
+    resetViewport(): void {
+        this.viewport.reset()
     }
 
     /// cannon shape
@@ -523,9 +242,7 @@ export class Game {
                     break
                 }
                 case "Space": {
-                    if (this.gameState.bulletReady == false) {
-                        this.gameState.bulletReady = true
-                    }
+                    this.gameState = { ... this.gameState, spacePressed: true }
                     break
                 }
                 default: {
@@ -542,6 +259,10 @@ export class Game {
                 }
                 case "ArrowLeft": {
                     this.gameState = { ...this.gameState, leftArrowPressed: false }
+                    break
+                }
+                case "Space": {
+                    this.gameState = { ... this.gameState, spacePressed: false }
                     break
                 }
                 default: {

@@ -6,20 +6,24 @@ export type GameState = {
     viewportWidth: number,
     viewportHeight: number
 
+    rightArrowPressed: boolean
+    leftArrowPressed: boolean
+    spacePressed: boolean
+
     score: number, 
 
     cannonPosition: Point
     cannonHitpoints: number
-    rightArrowPressed: boolean
-    leftArrowPressed: boolean
 
-    bullets: Array<Point>
-    bulletReady: boolean
+    cannonBulletPosition: Point | null
 
     invadersDirection: number
     invadersGrid: InvadersGrid 
-    invaderBulletReady: boolean
-    invaderBullets: Array<Point>
+    invaderBulletPosition: Point | null
+}
+
+export const gameOver = (gameState: GameState): boolean => {
+    return gameState.cannonHitpoints == 0 || gameState.invadersGrid.every(r => r.every(i => i == null))
 }
 
 export type GameObject = {}
