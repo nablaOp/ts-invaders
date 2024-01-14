@@ -1,4 +1,3 @@
-import type { Shape } from './Shape'
 import { gameOver, type GameState } from './Types'
 import { IViewport } from './IViewport'
 import * as Constants from './Constants'
@@ -95,10 +94,6 @@ export class Game {
     resetViewport(): void {
         this.viewport.reset()
     }
-
-    /// invader shape
-    
-
 
     // keymap
     
