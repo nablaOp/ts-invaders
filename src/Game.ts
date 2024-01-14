@@ -1,11 +1,12 @@
 import type { Point } from './Point'
 import type { Shape } from './Shape'
+import type { GameState, Invader } from './Types'
 import { IViewport } from './IViewport'
 import * as Constants from './Constants'
-
+import { CannonActor } from './Cannon'
+import { InvadersActor } from './Invaders'
 
 // TODO:
-// - fix invader - bullet collision
 // - add top menu
 // - adjust speed
 // - add invader animation
@@ -34,7 +35,7 @@ export class Game {
 
         this.msPerFrame = 1000 / 60
 
-        this.gameState = this.initGameState()
+        this.gameState = this.initGameState(viewport, width, height)
     }
 
     public start() : void {
@@ -62,9 +63,9 @@ export class Game {
         this.renderScore()
         this.renderLives()
         
-        this.renderCannon()
+        CannonActor.render(this.gameState)
         this.renderBullets()
-        this.renderInvaders()
+        InvadersActor.render(this.gameState)
         this.renderInvaderBullets()
 
         this.renderGameOver()
@@ -79,8 +80,8 @@ export class Game {
         let position = Constants.LIVES_INITIAL_POSITION
 
         for (let i = 0; i < this.gameState.cannonHitpoints; i++) {
-            const startPosition = this.transformPointForViewport(position)
-            const shape = this.getCannonShape().map(v => this.transformPointForViewport(v))
+            // const startPosition = this.transformPointForViewport(position)
+            // const shape = this.getCannonShape().map(v => this.transformPointForViewport(v))
             // this.viewport.render(startPosition, shape) 
             this.renderGameObjectHitBox(position, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT) 
             position =  { ...position, X: position.X + Constants.CANNON_WIDTH + 2 }
@@ -104,13 +105,6 @@ export class Game {
 
     resetViewport(): void {
         this.viewport.reset()
-    }
-
-    renderCannon(): void {
-        const startPosition = this.transformPointForViewport(this.gameState.cannonPosition)
-        const shape = this.getCannonShape().map(v => this.transformPointForViewport(v))
-
-        // this.viewport.render(startPosition, shape)
     }
 
     renderBullets(): void {
@@ -145,16 +139,19 @@ export class Game {
     
     // game state
     
-    initGameState() : GameState {
+    initGameState(viewport: IViewport, width: number, height: number): GameState {
         return {
+            viewport: viewport,
+            viewportWidth: width,
+            viewportHeight: height,
             score: 0,
-            cannonPosition: this.initCannon(),
+            cannonPosition: CannonActor.initAt(),
             cannonHitpoints: 3,
             rightArrowPressed: false,
             leftArrowPressed: false,
             bulletReady: false,
             bullets: [],
-            invadersGrid: this.initInvaders(),
+            invadersGrid: InvadersActor.init(),
             invadersDirection: 1,
             invaderBulletReady: false,
             invaderBullets: []
@@ -164,11 +161,11 @@ export class Game {
     update(): void {
         if (this.gameOver()) return
 
-        if (this.gameState.rightArrowPressed) this.moveCannonRight()
-        if (this.gameState.leftArrowPressed) this.moveCannonLeft()
+        CannonActor.update(this.gameState)
+
         this.shoot()
         this.updateBullets()
-        this.updateInvaders()
+        InvadersActor.update(this.gameState)
         this.invaderShoot()
         this.updateInvaderBullets()
     }
@@ -210,45 +207,6 @@ export class Game {
 
         return ((r1.X >= l1.X && r1.X <= l2.X && r1.Y >= l1.Y && r1.Y <= l2.Y) || 
             (l1.X >= r1.X && l1.X <= r2.X && l1.Y >= r1.Y && l1.Y <= r2.Y))
-    }
-
-    // cannon
-    
-    initCannon() : Point {
-        return {
-            X: this.gameAreaWidth / 2 - Constants.CANNON_WIDTH / 2, 
-            Y: this.gameAreaHeight - Constants.CANNON_HEIGHT - 5
-        }
-    }
-
-    moveCannonRight() : void {
-        if (this.gameState.cannonPosition.X >= this.gameAreaWidth - Constants.CANNON_WIDTH) {
-            this.gameState.cannonPosition = { 
-                ...this.gameState.cannonPosition, 
-                X: this.gameAreaWidth - Constants.CANNON_WIDTH 
-            }
-            return
-        }
-
-        this.gameState.cannonPosition = {
-            ... this.gameState.cannonPosition,
-            X: this.gameState.cannonPosition.X + Constants.CANNON_SPEED
-        }
-    }
-
-    moveCannonLeft() : void {
-        if (this.gameState.cannonPosition.X <= 0) {
-            this.gameState.cannonPosition = { 
-                ...this.gameState.cannonPosition, 
-                X: 0 
-            }
-            return
-        }
-
-        this.gameState.cannonPosition = {
-            ... this.gameState.cannonPosition,
-            X: this.gameState.cannonPosition.X - Constants.CANNON_SPEED
-        }
     }
 
     // cannon bullets
@@ -315,7 +273,7 @@ export class Game {
         }
 
         for (let j = 0; j < invaderToDestroy.length; j++) {
-            this.destroyInvader(invaderToDestroy[j])
+            InvadersActor.destroy(this.gameState, invaderToDestroy[j])
         }
     }
 
@@ -419,154 +377,6 @@ export class Game {
             this.destroyInvaderBullet(toDestroy[i])
         }
     }
-
-    // invaders
-
-    spawnLargeInvaderAt(position: Point): LargeInvader {
-        return this.spawnInvaderAt<LargeInvader>(position, 1, 10)
-    }
-
-    spawnMediumInvaderAt(position: Point): MediumInvader {
-        return this.spawnInvaderAt<MediumInvader>(position, 1, 20)
-    }
-
-    spawnSmallInvaderAt(position: Point): SmallInvader {
-        return this.spawnInvaderAt<SmallInvader>(position, 1, 30)
-    }
-
-    spawnInvaderAt<T extends Invader>(position: Point, hitpoints: number, score: number): T {
-        return { position, hitpoints, score } as T
-    }
-
-    initInvaders(): InvadersGrid {
-        const invadersGrid = Array<Array<LargeInvader | MediumInvader | SmallInvader | null>>(5)
-            .fill(Array<LargeInvader | MediumInvader | SmallInvader | null>(Constants.INVADER_ROW_LENGTH).fill(null)) as InvadersGrid
-
-        const verticalGap = Constants.INVADER_VERTICAL_GAP
-
-        const firstPositionInRow = 
-            (this.gameAreaWidth - (Constants.INVADER_WIDTH * Constants.INVADER_ROW_LENGTH + (Constants.INVADER_WIDTH / 2) * (Constants.INVADER_ROW_LENGTH - 1))) / 2
-        let curY = Constants.INVADER_INITIAL_TOP
-
-        for (let r = 0; r < 5; r++) {
-            let curX = firstPositionInRow
-            const spawner = 
-                r < 2 
-                    ? (p: Point) => this.spawnLargeInvaderAt(p) 
-                    : r < 4 
-                        ? (p: Point) => this.spawnMediumInvaderAt(p)
-                        : (p: Point) => this.spawnSmallInvaderAt(p)
-
-            let row = []
-            for (let i = 0; i < Constants.INVADER_ROW_LENGTH; i++) {
-                row.push(spawner({X: curX, Y: curY + r * (Constants.INVADER_HEIGHT + verticalGap)}))
-
-                curX = curX + Constants.INVADER_WIDTH + Constants.INVADER_WIDTH / 2
-            }
-            invadersGrid[r] = row
-        }
-
-        return invadersGrid
-    }
-
-    updateInvaders(): void {
-        const invadersGrid = this.gameState.invadersGrid
-
-        let updateCancelled = false
-        for (let r = 0; r < invadersGrid.length; r++) {
-            const invaders = invadersGrid[r].filter(a => a != null)
-
-            for (let i = 0; i < invaders.length; i++) {
-                if (invaders[i]!.position.Y <= 0) {
-                    updateCancelled = true
-                    break
-                }
-
-            }
-
-            if (updateCancelled) break
-        }
-
-        if (updateCancelled) return
-
-        let minX = 1000 
-        let maxX = -1 
-
-        let invadersDirection = this.gameState.invadersDirection
-        let directionChanged = false
-
-        for (let r = 0; r < invadersGrid.length; r++) {
-            const invaders = invadersGrid[r].filter(a => a != null)
-
-            for (let i = 0; i < invaders.length; i++) {
-                const position = invaders[i]!.position
-                position.X += invadersDirection * Constants.INVADER_SPEED
-
-                if (position.X < minX)
-                minX = position.X
-
-                if (position.X > maxX)
-                maxX = position.X
-
-                if (invadersDirection == 1) {
-                    if (maxX + Constants.INVADER_WIDTH >= this.gameAreaWidth) {
-                        directionChanged = true 
-                        break
-                    }
-                } else {
-                    if (minX <= 0) {
-                        directionChanged = true
-                        break
-                    }
-                }
-            }
-
-            if (directionChanged) break
-        }
-
-        if (directionChanged){
-            for (let r = 0; r < invadersGrid.length; r++) {
-                const invaders = invadersGrid[r].filter(a => a != null)
-
-                for (let i = 0; i < invaders.length; i++) {
-                    invaders[i]!.position.Y += Constants.INVADER_VERTICAL_SPEED
-                }
-            }
-
-            invadersDirection = -1 * invadersDirection
-
-            directionChanged = false
-        }
-
-        this.gameState.invadersDirection = invadersDirection
-        this.gameState.invadersGrid = invadersGrid
-    }
-
-    destroyInvader(invader: [number, number]): void {
-        const [r, i] = invader
-        this.gameState.invadersGrid[r][i] = null
-    }
-
-    renderInvaders(): void {
-        const invadersGrid = this.gameState.invadersGrid
-        for (let r = 0; r < invadersGrid.length; r++) {
-            const invaders = invadersGrid[r].filter(a => a != null)
-
-            for (let i = 0; i < invaders.length; i++) {
-                const startPosition = this.transformPointForViewport(invaders[i]!.position)
-
-                // const shapes = this.getLargeInvaderShape()
-                // for (const shape of shapes) {
-                //    const vShape = this.transformShapeForViewport(shape) 
-                //     this.viewport.render(startPosition, vShape)
-                // }
-
-                this.renderGameObjectHitBox(invaders[i]!.position, Constants.INVADER_WIDTH, Constants.INVADER_HEIGHT)
-            }
-        }
-    }
-
-
 
     /// cannon shape
     
@@ -742,35 +552,3 @@ export class Game {
     }
 }
 
-
-type GameState = {
-    score: number, 
-
-    cannonPosition: Point
-    cannonHitpoints: number
-    rightArrowPressed: boolean
-    leftArrowPressed: boolean
-
-    bullets: Array<Point>
-    bulletReady: boolean
-
-    invadersDirection: number
-    invadersGrid: InvadersGrid 
-    invaderBulletReady: boolean
-    invaderBullets: Array<Point>
-}
-
-type GameObject = {}
-
-type Invader = GameObject & {
-    position: Point
-    hitpoints: number
-    score: number
-}
-
-type LargeInvader = Invader 
-type MediumInvader = Invader
-type SmallInvader = Invader
-
-type InvadersRow = Array<LargeInvader | MediumInvader | SmallInvader | null>
-type InvadersGrid = Array<InvadersRow>
