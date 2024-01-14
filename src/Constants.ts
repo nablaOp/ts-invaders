@@ -2,8 +2,8 @@ import type { Point } from "./Point"
 
 // game area
 
-const GAME_AREA_WIDTH = 250
-const GAME_AREA_HEIGHT = 200
+const GAME_AREA_WIDTH = 256
+const GAME_AREA_HEIGHT = 224
 
 // Menu
 

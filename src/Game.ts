@@ -287,24 +287,26 @@ export class Game {
             if (this.gameState.bullets[i].Y <= 0) toDestroy.push(i)
 
             for (let r = 0; r < this.gameState.invadersGrid.length; r++) {
-                const activeInvaders = this.gameState.invadersGrid[r].filter(a => a != null)
-                for (let j = 0; j < activeInvaders.length; j++) {
-                const hasCollision = this.checkCollision(
-                    this.gameState.bullets[i], 
-                    Constants.BULLET_WIDTH,
-                    Constants.BULLET_HEIGHT,
-                    activeInvaders[j]!.position,
-                    Constants.INVADER_WIDTH,
-                    Constants.INVADER_HEIGHT)
+                for (let j = 0; j < this.gameState.invadersGrid[r].length; j++) {
+                    if (this.gameState.invadersGrid[r][j] == null)
+                        continue
 
-     
-                if (hasCollision) {
-                    toDestroy.push(i)
-                    this.gameState.score += this.gameState.invadersGrid[r][j]?.score
-                    invaderToDestroy.push([r, j])
-                    break
+                    const hasCollision = this.checkCollision(
+                        this.gameState.bullets[i], 
+                        Constants.BULLET_WIDTH,
+                        Constants.BULLET_HEIGHT,
+                        this.gameState.invadersGrid[r][j]!.position,
+                        Constants.INVADER_WIDTH,
+                        Constants.INVADER_HEIGHT)
+
+
+                    if (hasCollision) {
+                        toDestroy.push(i)
+                        this.gameState.score += this.gameState.invadersGrid[r][j]!.score
+                        invaderToDestroy.push([r, j])
+                        break
+                    }
                 }
-            }
             }
         }
 
