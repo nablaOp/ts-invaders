@@ -1,7 +1,7 @@
 import { Point } from './Point'
 import { GameState, Invader } from './Types'
 import * as Constants from './Constants'
-import { renderGameObjectHitBox, transformPointForViewport } from './ViewportUtils'
+import { renderGameObjectHitBox, transformPointForViewport, getColorByPosition } from './ViewportUtils'
 import { Shape } from './Shape'
 
 export const InvaderBulletActor = {
@@ -34,7 +34,7 @@ export const InvaderBulletActor = {
         const startPosition = transformPointForViewport(gameState, gameState.invaderBulletPosition)
         const vShape = shape.map((v: Point) => transformPointForViewport(gameState, v))
 
-        gameState.viewport.render(startPosition, vShape)
+        gameState.viewport.render(startPosition, vShape, getColorByPosition(gameState.invaderBulletPosition))
 
         renderGameObjectHitBox(
             gameState,

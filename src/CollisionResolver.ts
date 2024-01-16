@@ -4,15 +4,36 @@ import * as Constants from './Constants'
 import { InvadersActor } from './Invaders'
 import { InvaderBulletActor } from './InvaderBullet'
 import { CannonBulletActor } from './Bullet'
+import { UfoActor } from './Ufo'
 
 export const CollisionResolver = {
     resolve(gameState: GameState): void {
-        resolveCannonBullet(gameState)
+        resolveCannonBulletWithInvaders(gameState)
+        resolveCannonBulletWithUfo(gameState)
         resolveInvaderBullet(gameState)
     }
 }
 
-const resolveCannonBullet = (gameState: GameState): void => {
+const resolveCannonBulletWithUfo = (gameState: GameState): void => {
+    if (gameState.cannonBulletPosition == null) return
+    if (gameState.ufoPosition == null) return
+
+    const hasCollision = checkCollision(
+        gameState.cannonBulletPosition,
+        Constants.BULLET_WIDTH,
+        Constants.BULLET_HEIGHT,
+        gameState.ufoPosition,
+        Constants.UFO_WIDTH,
+        Constants.UFO_HEIGHT)
+
+    if (hasCollision) {
+        gameState.score += Constants.UFO_SCORE[gameState.cannonBulletCounter] 
+        CannonBulletActor.destroy(gameState)
+        UfoActor.destroy(gameState)
+    }
+}
+
+const resolveCannonBulletWithInvaders = (gameState: GameState): void => {
     if (gameState.cannonBulletPosition == null) return
 
     let invaderToDestroy : Array<[number, number]> = []

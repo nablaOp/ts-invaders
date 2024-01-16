@@ -4,6 +4,7 @@ import * as Constants from './Constants'
 import { CannonActor } from './Cannon'
 import { CannonBulletActor } from './Bullet'
 import { InvadersActor } from './Invaders'
+import { UfoActor } from './Ufo'
 import { InvaderBulletActor } from './InvaderBullet'
 import { StatusBarActor } from './StatusBar'
 import { CollisionResolver } from './CollisionResolver'
@@ -61,10 +62,14 @@ export class Game {
             rightArrowPressed: false,
             leftArrowPressed: false,
             spacePressed: false,
+            cannonBulletCounter: 0,
+            cannonBulletCounterDirection: 1,
             cannonBulletPosition: CannonBulletActor.initAt(),
             invadersGrid: InvadersActor.init(),
+            invadersSpeed: Constants.INVADER_SPEED,
             invadersDirection: 1,
-            invaderBulletPosition: InvaderBulletActor.initAt()
+            invaderBulletPosition: InvaderBulletActor.initAt(),
+            ufoPosition: UfoActor.initAt()
         }
     }
 
@@ -75,6 +80,7 @@ export class Game {
         CannonBulletActor.update(this.gameState)
         InvadersActor.update(this.gameState)
         InvaderBulletActor.update(this.gameState)
+        UfoActor.update(this.gameState)
 
         CollisionResolver.resolve(this.gameState)
     }
@@ -87,6 +93,7 @@ export class Game {
         CannonBulletActor.render(this.gameState)
         InvadersActor.render(this.gameState)
         InvaderBulletActor.render(this.gameState)
+        UfoActor.render(this.gameState)
 
         StatusBarActor.renderGameOver(this.gameState)
     }

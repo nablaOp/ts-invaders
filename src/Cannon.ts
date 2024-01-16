@@ -2,7 +2,7 @@ import * as Constants from './Constants'
 import type { GameState } from './Types'
 import type { Point } from './Point'
 import type { Shape } from './Shape'
-import { renderGameObjectHitBox, transformPointForViewport } from './ViewportUtils'
+import { renderGameObjectHitBox, transformPointForViewport, getColorByPosition } from './ViewportUtils'
 
 export const CannonActor = {
     initAt(): Point {
@@ -25,7 +25,7 @@ export const CannonActor = {
         const startPosition = transformPointForViewport(gameState, gameState.cannonPosition)
         const vShape = shape.map((v: Point) => transformPointForViewport(gameState, v))
 
-        gameState.viewport.render(startPosition, vShape)
+        gameState.viewport.render(startPosition, vShape, getColorByPosition(gameState.cannonPosition))
 
         renderGameObjectHitBox(gameState, gameState.cannonPosition, Constants.CANNON_WIDTH, Constants.CANNON_HEIGHT)
     },

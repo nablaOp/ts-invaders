@@ -15,9 +15,9 @@ export class CanvasViewport implements IViewport {
         this.canvasContext.stroke()
     }
 
-    public render(pos: Point, shape: Shape): void {
+    public render(pos: Point, shape: Shape, color: string): void {
         this.renderInternal(pos, shape)
-        this.canvasContext.fillStyle = "white"
+        this.canvasContext.fillStyle = color
         this.canvasContext.fill()
     }
 

@@ -2,7 +2,12 @@ import type { Point } from './Point'
 import type { Shape } from './Shape'
 import type { GameState, Invader, LargeInvader, MediumInvader, SmallInvader, InvadersGrid } from './Types'
 import * as Constants from './Constants'
-import { renderGameObjectHitBox, transformPointForViewport, transformShapeForViewport } from './ViewportUtils'
+import { 
+    renderGameObjectHitBox, 
+    transformPointForViewport, 
+    transformShapeForViewport, 
+    getColorByPosition, 
+} from './ViewportUtils'
 
 export const InvadersActor = {
     init(): InvadersGrid {
@@ -69,7 +74,7 @@ export const InvadersActor = {
 
             for (let i = 0; i < invaders.length; i++) {
                 const position = invaders[i]!.position
-                position.X += invadersDirection * Constants.INVADER_SPEED
+                position.X += invadersDirection * gameState.invadersSpeed 
 
                 if (position.X < minX)
                 minX = position.X
@@ -102,6 +107,7 @@ export const InvadersActor = {
                 }
             }
 
+            gameState.invadersSpeed += Constants.INVADER_SPEED_ADD 
             invadersDirection = -1 * invadersDirection
 
             directionChanged = false
@@ -121,7 +127,7 @@ export const InvadersActor = {
 
                 for (const shape of largeInvaderShape) {
                    const vShape = transformShapeForViewport(gameState, shape) 
-                    gameState.viewport.render(startPosition, vShape)
+                    gameState.viewport.render(startPosition, vShape, getColorByPosition(invaders[i]!.position))
                 }
 
                 renderGameObjectHitBox(

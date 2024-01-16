@@ -15,15 +15,22 @@ export type GameState = {
     cannonPosition: Point
     cannonHitpoints: number
 
+    cannonBulletCounter: number
+    cannonBulletCounterDirection: number
     cannonBulletPosition: Point | null
 
     invadersDirection: number
     invadersGrid: InvadersGrid 
+    invadersSpeed: number
     invaderBulletPosition: Point | null
+
+    ufoPosition: Point | null
 }
 
 export const gameOver = (gameState: GameState): boolean => {
-    return gameState.cannonHitpoints == 0 || gameState.invadersGrid.every(r => r.every(i => i == null))
+    return gameState.cannonHitpoints == 0 
+        || gameState.invadersGrid.every(r => r.every(i => i == null))
+        || gameState.invadersGrid.some(r => r.some(i => i != null && i.position.Y <= 0))
 }
 
 export type GameObject = {}

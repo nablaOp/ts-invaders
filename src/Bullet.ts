@@ -1,6 +1,6 @@
 import type { Point } from "./Point"
 import type { GameState } from "./Types"
-import { renderGameObjectHitBox, transformPointForViewport } from "./ViewportUtils"
+import { renderGameObjectHitBox, transformPointForViewport, getColorByPosition } from "./ViewportUtils"
 import * as Constants from './Constants'
 import { Shape } from "./Shape"
 
@@ -38,7 +38,7 @@ export const CannonBulletActor = {
         const startPosition = transformPointForViewport(gameState, gameState.cannonBulletPosition)
         const vShape = shape.map((v: Point) => transformPointForViewport(gameState, v))
 
-        gameState.viewport.render(startPosition, vShape)
+        gameState.viewport.render(startPosition, vShape, getColorByPosition(gameState.cannonBulletPosition))
 
         renderGameObjectHitBox(
             gameState,
@@ -52,6 +52,18 @@ const spawnBullet = (gameState: GameState): void => {
     gameState.cannonBulletPosition = {
         X: gameState.cannonPosition.X + Constants.CANNON_WIDTH / 2,
         Y: gameState.cannonPosition.Y - Constants.BULLET_HEIGHT
+    }
+
+    gameState.cannonBulletCounter = 
+        gameState.cannonBulletCounterDirection == 1 
+        ? gameState.cannonBulletCounter + 1
+        : gameState.cannonBulletCounter - 1
+
+    if (gameState.cannonBulletCounter == 16) {
+        gameState.cannonBulletCounterDirection = -1
+    }
+    if (gameState.cannonBulletCounter == 0) {
+        gameState.cannonBulletCounterDirection = 1
     }
 }
 

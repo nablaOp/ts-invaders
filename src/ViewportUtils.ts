@@ -19,6 +19,18 @@ export const transformShapeForViewport = (gameState: GameState, shape: Shape): S
     return shape.map(v => transformPointForViewport(gameState, v))
 }
 
+export const getColorByPosition = (position: Point): string => {
+    if (position.Y <= Constants.RED_ZONE) {
+        return "red"
+    }
+
+    if (position.Y >= Constants.GREEN_ZONE) {
+        return "green"
+    }
+
+    return "white"
+}
+
 export const renderGameObjectHitBox = (gameState: GameState, position: Point, width: number, height: number): void => {
     // const vPosition = transformPointForViewport(gameState, position)
     // const hitBox = buildHitBox(width, height)
