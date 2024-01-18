@@ -8,6 +8,7 @@ import { UfoActor } from './Ufo'
 import { InvaderBulletActor } from './InvaderBullet'
 import { StatusBarActor } from './StatusBar'
 import { CollisionResolver } from './CollisionResolver'
+import { DefenseActor } from './Defense'
 
 // TODO:
 // - add invader animation
@@ -65,6 +66,7 @@ export class Game {
             cannonBulletCounter: 0,
             cannonBulletCounterDirection: 1,
             cannonBulletPosition: CannonBulletActor.initAt(),
+            defenseSystem: DefenseActor.init(),
             invadersGrid: InvadersActor.init(),
             invadersSpeed: Constants.INVADER_SPEED,
             invadersDirection: 1,
@@ -91,6 +93,7 @@ export class Game {
         StatusBarActor.render(this.gameState)
         CannonActor.render(this.gameState)
         CannonBulletActor.render(this.gameState)
+        DefenseActor.render(this.gameState)
         InvadersActor.render(this.gameState)
         InvaderBulletActor.render(this.gameState)
         UfoActor.render(this.gameState)

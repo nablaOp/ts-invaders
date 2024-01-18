@@ -5,7 +5,7 @@ import type { Point } from "./Point"
 const GAME_AREA_WIDTH = 256
 const GAME_AREA_HEIGHT = 224
 
-const GREEN_ZONE = 160
+const GREEN_ZONE = 180
 const RED_ZONE = 30
 
 // Menu
@@ -35,6 +35,12 @@ const CANNON_SPEED = GAME_AREA_WIDTH / 100
 const BULLET_WIDTH = 1 
 const BULLET_HEIGHT = 5
 const BULLET_MOVE_SPEED = GAME_AREA_HEIGHT / 30
+
+// defense
+
+const DEFENSE_INITIAL_TOP = 180
+const DEFENSE_WIDTH = 20
+const DEFENSE_HEIGHT = 20
 
 // invader
 
@@ -78,6 +84,9 @@ export {
     CANNON_SPEED,
     CANNON_WIDTH,
     CANNON_HEIGHT,
+    DEFENSE_INITIAL_TOP,
+    DEFENSE_WIDTH,
+    DEFENSE_HEIGHT,
     INVADER_SPEED,
     INVADER_SPEED_ADD,
     INVADER_VERTICAL_SPEED,
