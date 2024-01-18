@@ -1,4 +1,4 @@
-import { DefenseSystem, GameState } from "./Types";
+import { BunkerPoint, BunkerPoints, BunkerRow, DefenseSystem, GameState, BunkerPointState } from "./Types";
 import * as Constants from './Constants'
 import { Shape } from "./Shape";
 import { getColorByPosition, renderGameObjectHitBox, transformPointForViewport } from "./ViewportUtils";
@@ -12,7 +12,8 @@ export const DefenseActor = {
 
         for (let i = 0; i < 4; i++) {
             system.push({
-                position: {X: x, Y: Constants.DEFENSE_INITIAL_TOP}
+                position: {X: x, Y: Constants.DEFENSE_INITIAL_TOP},
+                points: initBunkerPoints()
             })
 
             x += Constants.DEFENSE_WIDTH + gap
@@ -35,6 +36,22 @@ export const DefenseActor = {
                 Constants.DEFENSE_HEIGHT)
         }
     }
+}
+
+const initBunkerPoints = (): BunkerPoints => {
+    const points: BunkerPoints = new Array<BunkerRow>
+
+    for (let i = 0; i < Constants.DEFENSE_WIDTH; i++) {
+        const row: BunkerRow = new Array<BunkerPoint>
+
+        for (let j = 0; j < Constants.DEFENSE_HEIGHT; j++) {
+            row.push({X: i, Y: j, state: BunkerPointState.Default})
+        }
+
+        points.push(row)
+    }
+
+    return points
 }
 
 const shape: Shape = [

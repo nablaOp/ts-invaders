@@ -36,10 +36,11 @@ export const gameOver = (gameState: GameState): boolean => {
         || gameState.invadersGrid.some(r => r.some(i => i != null && i.position.Y >= 179 - Constants.INVADER_HEIGHT))
 }
 
-export type GameObject = {}
+export type GameObject = {
+    position: Point
+}
 
 export type Invader = GameObject & {
-    position: Point
     hitpoints: number
     score: number
 }
@@ -51,8 +52,20 @@ export type SmallInvader = Invader
 export type InvadersRow = Array<LargeInvader | MediumInvader | SmallInvader | null>
 export type InvadersGrid = Array<InvadersRow>
 
-export type DefenseBunker = GameObject & {
-    position: Point
+export const BunkerPointState = {
+    Default: 1,
+    Destroyed: 2,
+    Unused: 3
+} as const;
+
+export type BunkerPoint = Point & {
+   state: typeof BunkerPointState[keyof typeof BunkerPointState]
+}
+export type BunkerRow = Array<BunkerPoint>
+export type BunkerPoints = Array<BunkerRow>
+
+export type Bunker = GameObject & {
+    points: BunkerPoints
 }
 
-export type DefenseSystem = Array<DefenseBunker>
+export type DefenseSystem = Array<Bunker>
