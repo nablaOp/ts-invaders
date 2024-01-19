@@ -5,12 +5,57 @@ import { InvadersActor } from './Invaders'
 import { InvaderBulletActor } from './InvaderBullet'
 import { CannonBulletActor } from './Bullet'
 import { UfoActor } from './Ufo'
+import { DefenseActor } from './Defense'
 
 export const CollisionResolver = {
     resolve(gameState: GameState): void {
+        resolveCannonBulletWithBunker(gameState)
         resolveCannonBulletWithInvaders(gameState)
         resolveCannonBulletWithUfo(gameState)
+        resolveInvaderBulletWithBunker(gameState)
         resolveInvaderBullet(gameState)
+    }
+}
+
+const resolveInvaderBulletWithBunker = (gameState: GameState): void => {
+    if (gameState.invaderBulletPosition == null) return
+
+    for (let i = 0; i < gameState.defenseSystem.length; i++) {
+        const hasCollision = checkCollision(
+            gameState.invaderBulletPosition,
+            Constants.INVADER_BULLET_WIDTH,
+            Constants.INVADER_BULLET_HEIGHT,
+            gameState.defenseSystem[i].position,
+            Constants.BUNKER_WIDTH,
+            Constants.BUNKER_HEIGHT)
+
+        if (hasCollision) {
+            if (DefenseActor.updateByTopCollision(gameState, i, gameState.invaderBulletPosition.X)) {
+                InvaderBulletActor.destroy(gameState)
+                break
+            }
+        }
+    }
+}
+
+const resolveCannonBulletWithBunker = (gameState: GameState): void => {
+    if (gameState.cannonBulletPosition == null) return
+
+    for (let i = 0; i < gameState.defenseSystem.length; i++) {
+        const hasCollision = checkCollision(
+            gameState.cannonBulletPosition,
+            Constants.BULLET_WIDTH,
+            Constants.BULLET_HEIGHT,
+            gameState.defenseSystem[i].position,
+            Constants.BUNKER_WIDTH,
+            Constants.BUNKER_HEIGHT)
+
+        if (hasCollision) {
+            if (DefenseActor.updateByCollision(gameState, i, gameState.cannonBulletPosition.X)) {
+                CannonBulletActor.destroy(gameState)
+                break
+            }
+        }
     }
 }
 
@@ -92,6 +137,5 @@ const checkCollision = (p1: Point, width1: number, height1: number, p2: Point, w
         const r1 = p2
         const r2 = {X: p2.X + width2, Y: p2.Y + height2}
 
-        return ((r1.X >= l1.X && r1.X <= l2.X && r1.Y >= l1.Y && r1.Y <= l2.Y) || 
-            (l1.X >= r1.X && l1.X <= r2.X && l1.Y >= r1.Y && l1.Y <= r2.Y))
+        return !(l2.X < r1.X || r2.X < l1.X || l2.Y < r1.Y || r2.Y < l1.Y)
     }
