@@ -67,19 +67,7 @@ export const DefenseActor = {
         }
 
         if (beingStuck) {
-            setDestroyed(bunker, epicenter.X, epicenter.Y)
-            setDestroyed(bunker, epicenter.X - 1, epicenter.Y)
-            setDestroyed(bunker, epicenter.X + 1, epicenter.Y)
-            setDestroyed(bunker, epicenter.X - 2, epicenter.Y)
-            setDestroyed(bunker, epicenter.X + 2, epicenter.Y)
-            setDestroyed(bunker, epicenter.X - 1, epicenter.Y + 1)
-            setDestroyed(bunker, epicenter.X + 1, epicenter.Y + 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y + 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y + 2)
-            setDestroyed(bunker, epicenter.X - 1, epicenter.Y - 1)
-            setDestroyed(bunker, epicenter.X + 1, epicenter.Y - 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y - 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y - 2)
+            destroyPoints(bunker, epicenter)
         }
 
         return beingStuck
@@ -103,29 +91,35 @@ export const DefenseActor = {
         }
 
         if (beingStuck) {
-            setDestroyed(bunker, epicenter.X, epicenter.Y)
-            setDestroyed(bunker, epicenter.X - 1, epicenter.Y)
-            setDestroyed(bunker, epicenter.X + 1, epicenter.Y)
-            setDestroyed(bunker, epicenter.X - 2, epicenter.Y)
-            setDestroyed(bunker, epicenter.X + 2, epicenter.Y)
-            setDestroyed(bunker, epicenter.X - 1, epicenter.Y + 1)
-            setDestroyed(bunker, epicenter.X + 1, epicenter.Y + 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y + 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y + 2)
-            setDestroyed(bunker, epicenter.X - 1, epicenter.Y - 1)
-            setDestroyed(bunker, epicenter.X + 1, epicenter.Y - 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y - 1)
-            setDestroyed(bunker, epicenter.X, epicenter.Y - 2)
+            destroyPoints(bunker, epicenter)
         }
 
         return beingStuck
     }
 }
 
-const setDestroyed = (bunker: Bunker, x: number, y: number): void => {
+const destroyPoint = (bunker: Bunker, x: number, y: number): void => {
     if (bunker.points[y] && bunker.points[y][x]) {
         bunker.points[y][x].state = BunkerPointState.Destroyed
     }
+}
+
+const destroyPoints = (bunker: Bunker, epicenter: Point): void => {
+    destroyPoint(bunker, epicenter.X, epicenter.Y)
+    destroyPoint(bunker, epicenter.X + 1, epicenter.Y)
+    destroyPoint(bunker, epicenter.X + 2, epicenter.Y)
+    destroyPoint(bunker, epicenter.X - 1, epicenter.Y)
+    destroyPoint(bunker, epicenter.X - 2, epicenter.Y)
+    
+    destroyPoint(bunker, epicenter.X, epicenter.Y + 1)
+    destroyPoint(bunker, epicenter.X, epicenter.Y + 2)
+    destroyPoint(bunker, epicenter.X, epicenter.Y - 1)
+    destroyPoint(bunker, epicenter.X, epicenter.Y - 2)
+
+    destroyPoint(bunker, epicenter.X + 1, epicenter.Y + 1)
+    destroyPoint(bunker, epicenter.X + 1, epicenter.Y - 1)
+    destroyPoint(bunker, epicenter.X - 1, epicenter.Y + 1)
+    destroyPoint(bunker, epicenter.X - 1, epicenter.Y - 1)
 }
 
 const initBunkerPoints = (): BunkerPoints => {
