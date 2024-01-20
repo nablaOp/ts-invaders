@@ -4,14 +4,16 @@ import { IViewport } from './IViewport'
 
 export class CanvasViewport implements IViewport {
     private canvasContext: CanvasRenderingContext2D
+    private scale: number
 
-    constructor(canvasContext: CanvasRenderingContext2D) {
+    constructor(canvasContext: CanvasRenderingContext2D, scale: number) {
         this.canvasContext = canvasContext
+        this.scale = scale
     }
 
     public renderPoint(pos: Point, color: string): void {
         this.canvasContext.fillStyle = color
-        this.canvasContext.fillRect(pos.X, pos.Y, 1, 1)
+        this.canvasContext.fillRect(pos.X, pos.Y, this.scale, this.scale)
     }
 
     public renderBorder(pos: Point, shape: Shape): void {

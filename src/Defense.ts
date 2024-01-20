@@ -37,9 +37,6 @@ export const DefenseActor = {
             }
 
             const startPosition = transformPointForViewport(gameState, gameState.defenseSystem[i].position)
-            // const vShape = shape.map((v: Point) => transformPointForViewport(gameState, v))
-            //
-            // gameState.viewport.render(startPosition, vShape, getColorByPosition(startPosition))
 
             renderGameObjectHitBox(
                 gameState,
@@ -129,7 +126,12 @@ const initBunkerPoints = (): BunkerPoints => {
         const row: BunkerRow = new Array<BunkerPoint>
 
         for (let j = 0; j < Constants.BUNKER_WIDTH; j++) {
-            row.push({X: j, Y: i, state: BunkerPointState.Default})
+            const state = 
+                unusedPoints.some(p => p.X == j && p.Y == i)
+                    ? BunkerPointState.Unused
+                    : BunkerPointState.Default
+
+            row.push({X: j, Y: i, state: state})
         }
 
         points.push(row)
@@ -138,9 +140,33 @@ const initBunkerPoints = (): BunkerPoints => {
     return points
 }
 
-const shape: Shape = [
+const unusedPoints: Array<Point> = [
     {X: 0, Y: 0},
-    {X: Constants.BUNKER_WIDTH, Y: 0},
-    {X: Constants.BUNKER_WIDTH, Y: Constants.BUNKER_HEIGHT},
-    {X: 0, Y: Constants.BUNKER_HEIGHT}
+    {X: 0, Y: 1},
+    {X: 0, Y: 2},
+    {X: Constants.BUNKER_WIDTH - 3, Y: 0},
+    {X: Constants.BUNKER_WIDTH - 2, Y: 1},
+    {X: Constants.BUNKER_WIDTH - 1, Y: 2},
+    {X: 1, Y: 0},
+    {X: 1, Y: 1},
+    {X: Constants.BUNKER_WIDTH - 2, Y: 0},
+    {X: Constants.BUNKER_WIDTH - 1, Y: 1},
+    {X: 2, Y: 0},
+    {X: Constants.BUNKER_WIDTH - 1, Y: 0},
+    {X: Constants.BUNKER_WIDTH / 2 - 3, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2 - 2, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2 - 1, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2 + 1, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2 + 2, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2 + 3, Y: Constants.BUNKER_HEIGHT - 1},
+    {X: Constants.BUNKER_WIDTH / 2 - 2, Y: Constants.BUNKER_HEIGHT - 2},
+    {X: Constants.BUNKER_WIDTH / 2 - 1, Y: Constants.BUNKER_HEIGHT - 2},
+    {X: Constants.BUNKER_WIDTH / 2, Y: Constants.BUNKER_HEIGHT - 2},
+    {X: Constants.BUNKER_WIDTH / 2 + 1, Y: Constants.BUNKER_HEIGHT - 2},
+    {X: Constants.BUNKER_WIDTH / 2 + 2, Y: Constants.BUNKER_HEIGHT - 2},
+    {X: Constants.BUNKER_WIDTH / 2 - 1, Y: Constants.BUNKER_HEIGHT - 3},
+    {X: Constants.BUNKER_WIDTH / 2, Y: Constants.BUNKER_HEIGHT - 3},
+    {X: Constants.BUNKER_WIDTH / 2 + 1, Y: Constants.BUNKER_HEIGHT - 3},
 ]
+
