@@ -1,18 +1,28 @@
-import type { Point } from './Point'
-import type { Shape } from './Shape'
-import type { GameState, Invader, LargeInvader, MediumInvader, SmallInvader, InvadersGrid } from './Types'
+import { Point } from './Point'
+import { Shape } from './Shape'
+import { 
+    GameState, 
+    Invader, 
+    LargeInvader, 
+    MediumInvader, 
+    SmallInvader, 
+    InvadersGrid, 
+    DestroyedInvader, 
+    OneOfInvaders 
+} from './Types'
 import * as Constants from './Constants'
 import { 
     renderGameObjectHitBox, 
     transformPointForViewport, 
     transformShapeForViewport, 
-    getColorByPosition, 
+    getColorByPosition,
+    renderColoredPoints, 
 } from './ViewportUtils'
 
 export const InvadersActor = {
     init(): InvadersGrid {
-        const invadersGrid = Array<Array<LargeInvader | MediumInvader | SmallInvader | null>>(5)
-            .fill(Array<LargeInvader | MediumInvader | SmallInvader | null>(Constants.INVADER_ROW_LENGTH).fill(null)) as InvadersGrid
+        const invadersGrid = Array<Array<OneOfInvaders>>(5)
+            .fill(Array<OneOfInvaders>(Constants.INVADER_ROW_LENGTH).fill(null)) as InvadersGrid
 
         const verticalGap = Constants.INVADER_VERTICAL_GAP
 
@@ -46,23 +56,6 @@ export const InvadersActor = {
     update(gameState: GameState): void {
         const invadersGrid = gameState.invadersGrid
 
-        let updateCancelled = false
-        for (let r = 0; r < invadersGrid.length; r++) {
-            const invaders = invadersGrid[r].filter(a => a != null)
-
-            for (let i = 0; i < invaders.length; i++) {
-                if (invaders[i]!.position.Y <= 0) {
-                    updateCancelled = true
-                    break
-                }
-
-            }
-
-            if (updateCancelled) break
-        }
-
-        if (updateCancelled) return
-
         let minX = 1000 
         let maxX = -1 
 
@@ -70,10 +63,23 @@ export const InvadersActor = {
         let directionChanged = false
 
         for (let r = 0; r < invadersGrid.length; r++) {
-            const invaders = invadersGrid[r].filter(a => a != null)
+            for (let i = 0; i < invadersGrid[r].length; i++) {
+                const invader = invadersGrid[r][i]
 
-            for (let i = 0; i < invaders.length; i++) {
-                const position = invaders[i]!.position
+                if (invader === null) continue
+
+                if (isDestroyedInvader(invader)) {
+                    const dInvader = invader as DestroyedInvader
+                    dInvader.tick += 1
+
+                    if (dInvader.tick > 10) {
+                        gameState.invadersGrid[r][i] = null
+                    }
+
+                    continue
+                }
+
+                const position = invader.position
                 position.X += invadersDirection * gameState.invadersSpeed 
 
                 if (position.X < minX)
@@ -114,7 +120,6 @@ export const InvadersActor = {
         }
 
         gameState.invadersDirection = invadersDirection
-        gameState.invadersGrid = invadersGrid
     },
 
     render(gameState: GameState): void {
@@ -123,11 +128,16 @@ export const InvadersActor = {
             const invaders = invadersGrid[r].filter(a => a != null)
 
             for (let i = 0; i < invaders.length; i++) {
-                const startPosition = transformPointForViewport(gameState, invaders[i]!.position)
+                const invader = invaders[i]!
+                const startPosition = transformPointForViewport(gameState, invader.position)
 
-                for (const shape of largeInvaderShape) {
-                   const vShape = transformShapeForViewport(gameState, shape) 
-                    gameState.viewport.render(startPosition, vShape, getColorByPosition(invaders[i]!.position))
+                if (isDestroyedInvader(invader)) {
+                    renderColoredPoints(gameState, startPosition, bangShape, BANG_SHAPE_WIDTH)
+                } else {
+                    for (const shape of largeInvaderShape) {
+                        const vShape = transformShapeForViewport(gameState, shape) 
+                        gameState.viewport.render(startPosition, vShape, getColorByPosition(invaders[i]!.position))
+                    }
                 }
 
                 renderGameObjectHitBox(
@@ -141,8 +151,17 @@ export const InvadersActor = {
 
     destroy(gameState: GameState, invader: [number, number]): void {
         const [r, i] = invader
-        gameState.invadersGrid[r][i] = null
+        gameState.invadersGrid[r][i] = { position: gameState.invadersGrid[r][i]?.position, tick: 0 } as DestroyedInvader
+        // gameState.invadersGrid[r][i] = null
+    },
+
+    isActivateInvader(invader: OneOfInvaders): boolean {
+        return invader != null && !isDestroyedInvader(invader)
     }
+}
+
+const isDestroyedInvader = (invader: OneOfInvaders): invader is DestroyedInvader => {
+    return invader != null && (invader as Invader).score === undefined
 }
 
 const spawnLargeInvaderAt = (position: Point): LargeInvader => {
@@ -232,4 +251,23 @@ const largeInvaderShape: Array<Shape> = [
         {X: 10, Y: 8},
         {X: 8, Y: 8},
     ]
+]
+
+const BANG_SHAPE_WIDTH = 13
+const BANG_SHAPE_HEIGHT = 13
+
+const bangShape: Array<string> = [
+'', '', '', '', '', '', '#FFFFFF', '', '', '', '', '', '', 
+'', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', '', '', '', '', 
+'', '', '', '', '', '', '', '', '', '#FFFFFF', '', '', '', 
+'', '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', '#FFFFFF', 
+'', '', '', '', '', '#FFFFFF', '', '', '#FFFFFF', '', '', '#FFFFFF', '', 
+'', '', '', '', '', '', '', '', '', '', '', '', '', 
+'#FFFFFF', '#FFFFFF', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', 
+'', '', '', '', '', '', '', '', '', '', '', '', '', 
+'', '#FFFFFF', '', '', '#FFFFFF', '', '', '#FFFFFF', '', '', '', '', '', 
+'#FFFFFF', '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', '', 
+'', '', '', '#FFFFFF', '', '', '', '', '', '', '', '', '', 
+'', '', '', '', '', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', 
+'', '', '', '', '', '', '#FFFFFF', '', '', '', '', '', ''
 ]

@@ -1,5 +1,5 @@
 import type { Point } from './Point'
-import type { GameState } from './Types'
+import type { GameState, Invader } from './Types'
 import * as Constants from './Constants'
 import { InvadersActor } from './Invaders'
 import { InvaderBulletActor } from './InvaderBullet'
@@ -81,25 +81,26 @@ const resolveCannonBulletWithUfo = (gameState: GameState): void => {
 const resolveCannonBulletWithInvaders = (gameState: GameState): void => {
     if (gameState.cannonBulletPosition == null) return
 
-    let invaderToDestroy : Array<[number, number]> = []
+    let invaderToDestroy: Array<[number, number]> = []
 
     let hasCollision = false
     for (let r = 0; r < gameState.invadersGrid.length; r++) {
         for (let j = 0; j < gameState.invadersGrid[r].length; j++) {
-            if (gameState.invadersGrid[r][j] == null)
-            continue
+            if (!InvadersActor.isActivateInvader(gameState.invadersGrid[r][j])) continue
+
+            const invader = gameState.invadersGrid[r][j] as Invader
 
             hasCollision = checkCollision(
                 gameState.cannonBulletPosition, 
                 Constants.BULLET_WIDTH,
                 Constants.BULLET_HEIGHT,
-                gameState.invadersGrid[r][j]!.position,
+                invader.position,
                 Constants.INVADER_WIDTH,
                 Constants.INVADER_HEIGHT)
 
 
             if (hasCollision) {
-                gameState.score += gameState.invadersGrid[r][j]!.score
+                gameState.score += invader.score
                 invaderToDestroy.push([r, j])
                 CannonBulletActor.destroy(gameState)
                 break

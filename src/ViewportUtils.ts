@@ -2,6 +2,7 @@ import type { Shape } from './Shape'
 import type { Point } from './Point'
 import type { GameState } from './Types'
 import * as Constants from './Constants'
+import { IViewport } from './IViewport'
 
 export const transformXForViewport = (gameState: GameState, x: number): number => {
     return gameState.viewportWidth * x / Constants.GAME_AREA_WIDTH
@@ -29,6 +30,30 @@ export const getColorByPosition = (position: Point): string => {
     }
 
     return "white"
+}
+
+export const renderColoredPoints = (
+    gameState: GameState,
+    startPosition: Point,
+    points: Array<string>, 
+    rowLength: number): void => {
+    let offset: number = 0
+
+    for (let p = 0; p < points.length; p++) {
+        const x = p - rowLength * offset
+        const y = offset
+
+        if (points[p] != '') {
+            gameState.viewport.renderPoint({
+                X: startPosition.X + transformXForViewport(gameState, x), 
+                Y: startPosition.Y + transformYForViewport(gameState, y)
+            }, points[p])
+        }
+
+        if (x == rowLength - 1) {
+            offset += 1
+        }
+    }
 }
 
 export const renderGameObjectHitBox = (gameState: GameState, position: Point, width: number, height: number): void => {

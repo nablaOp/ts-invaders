@@ -49,7 +49,12 @@ export type LargeInvader = Invader
 export type MediumInvader = Invader
 export type SmallInvader = Invader
 
-export type InvadersRow = Array<LargeInvader | MediumInvader | SmallInvader | null>
+export type DestroyedInvader = GameObject & {
+    tick: number
+}
+
+export type OneOfInvaders = LargeInvader | MediumInvader | SmallInvader | DestroyedInvader | null
+export type InvadersRow = Array<OneOfInvaders>
 export type InvadersGrid = Array<InvadersRow>
 
 export const BunkerPointState = {
