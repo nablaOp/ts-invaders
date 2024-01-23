@@ -43,6 +43,10 @@ export type GameObject = {
 export type Invader = GameObject & {
     hitpoints: number
     score: number
+    viewIdx: number
+    viewTick: number
+    views: Array<string>
+    width: number
 }
 
 export type LargeInvader = Invader 

@@ -35,11 +35,11 @@ export const InvadersActor = {
         for (let r = 0; r < 5; r++) {
             let curX = firstPositionInRow
             const spawner = 
-                r < 2 
-                    ? (p: Point) => spawnLargeInvaderAt(p) 
-                    : r < 4 
+                r < 1
+                    ? (p: Point) => spawnSmallInvaderAt(p) 
+                    : r < 3
                         ? (p: Point) => spawnMediumInvaderAt(p)
-                        : (p: Point) => spawnSmallInvaderAt(p)
+                        : (p: Point) => spawnLargeInvaderAt(p)
 
             let row = []
             for (let i = 0; i < Constants.INVADER_ROW_LENGTH; i++) {
@@ -77,6 +77,12 @@ export const InvadersActor = {
                     }
 
                     continue
+                }
+
+                invader.viewTick += 1
+                if (invader.viewTick > 20) {
+                    invader.viewIdx = invader.viewIdx == 0 ? 1 : 0
+                    invader.viewTick = 0
                 }
 
                 const position = invader.position
@@ -132,12 +138,17 @@ export const InvadersActor = {
                 const startPosition = transformPointForViewport(gameState, invader.position)
 
                 if (isDestroyedInvader(invader)) {
-                    renderColoredPoints(gameState, startPosition, bangShape, BANG_SHAPE_WIDTH)
+                    renderColoredPoints(
+                        gameState, 
+                        startPosition, 
+                        shapes.bangShape, 
+                        BANG_SHAPE_WIDTH)
                 } else {
-                    for (const shape of largeInvaderShape) {
-                        const vShape = transformShapeForViewport(gameState, shape) 
-                        gameState.viewport.render(startPosition, vShape, getColorByPosition(invaders[i]!.position))
-                    }
+                    renderColoredPoints(
+                        gameState, 
+                        startPosition,
+                        shapes[invader.views[invader.viewIdx]],
+                        invader.width)
                 }
 
                 renderGameObjectHitBox(
@@ -152,7 +163,6 @@ export const InvadersActor = {
     destroy(gameState: GameState, invader: [number, number]): void {
         const [r, i] = invader
         gameState.invadersGrid[r][i] = { position: gameState.invadersGrid[r][i]?.position, tick: 0 } as DestroyedInvader
-        // gameState.invadersGrid[r][i] = null
     },
 
     isActivateInvader(invader: OneOfInvaders): boolean {
@@ -165,109 +175,87 @@ const isDestroyedInvader = (invader: OneOfInvaders): invader is DestroyedInvader
 }
 
 const spawnLargeInvaderAt = (position: Point): LargeInvader => {
-    return spawnInvaderAt<LargeInvader>(position, 1, 10)
+    return spawnInvaderAt<LargeInvader>(position, 1, 10, 12, ["largeShape_0", "largeShape_1"])
 }
 
 const spawnMediumInvaderAt =(position: Point): MediumInvader => {
-    return spawnInvaderAt<MediumInvader>(position, 1, 20)
+    return spawnInvaderAt<MediumInvader>(position, 1, 20, 11, ["mediumShape_0", "mediumShape_1"])
 }
 
 const spawnSmallInvaderAt= (position: Point): SmallInvader => {
-    return spawnInvaderAt<SmallInvader>(position, 1, 30)
+    return spawnInvaderAt<SmallInvader>(position, 1, 30, 11, ["mediumShape_0", "mediumShape_1"])
 }
 
-const spawnInvaderAt = <T extends Invader>(position: Point, hitpoints: number, score: number): T  => {
-    return { position, hitpoints, score } as T
+const spawnInvaderAt = <T extends Invader>(
+    position: Point, 
+    hitpoints: number, 
+    score: number, 
+    width: number,
+    views: Array<string>): T  => {
+    return { position, hitpoints, score, width, views, viewIdx: 0, viewTick: 0} as T
 }
-
-const largeInvaderShape: Array<Shape> = [ 
-    [
-        {X: 4, Y: 0},
-        {X: 8, Y: 0},
-        {X: 8, Y: 1},
-        {X: 11, Y: 1},
-        {X: 11, Y: 2},
-        {X: 12, Y: 2},
-        {X: 12, Y: 3},
-        {X: 0, Y: 3},
-        {X: 0, Y: 2},
-        {X: 1, Y: 2},
-        {X: 1, Y: 1},
-        {X: 4, Y: 1},
-    ],    
-    [
-        {X: 0, Y: 3},
-        {X: 3, Y: 3},
-        {X: 3, Y: 4},
-        {X: 0, Y: 4},
-    ], [
-        {X: 9, Y: 3},
-        {X: 12, Y: 3},
-        {X: 12, Y: 4},
-        {X: 9, Y: 4},
-    ],[
-        {X: 5, Y: 3},
-        {X: 7, Y: 3},
-        {X: 7, Y: 4},
-        {X: 5, Y: 4},
-    ],[
-        {X: 0, Y: 4},
-        {X: 12, Y: 4},
-        {X: 12, Y: 5},
-        {X: 0, Y: 5},
-    ],[
-        {X: 2, Y: 5},
-        {X: 5, Y: 5},
-        {X: 5, Y: 6},
-        {X: 2, Y: 6},
-    ],[
-        {X: 7, Y: 5},
-        {X: 10, Y: 5},
-        {X: 10, Y: 6},
-        {X: 7, Y: 6},
-    ],[
-        {X: 5, Y: 6},
-        {X: 7, Y: 6},
-        {X: 7, Y: 7},
-        {X: 5, Y: 7},
-    ],[
-        {X: 1, Y: 6},
-        {X: 3, Y: 6},
-        {X: 3, Y: 7},
-        {X: 1, Y: 7},
-    ],[
-        {X: 2, Y: 7},
-        {X: 4, Y: 7},
-        {X: 4, Y: 8},
-        {X: 2, Y: 8},
-    ],[
-        {X: 9, Y: 6},
-        {X: 11, Y: 6},
-        {X: 11, Y: 7},
-        {X: 9, Y: 7},
-    ],[
-        {X: 8, Y: 7},
-        {X: 10, Y: 7},
-        {X: 10, Y: 8},
-        {X: 8, Y: 8},
-    ]
-]
 
 const BANG_SHAPE_WIDTH = 13
-const BANG_SHAPE_HEIGHT = 13
 
-const bangShape: Array<string> = [
-'', '', '', '', '', '', '#FFFFFF', '', '', '', '', '', '', 
-'', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', '', '', '', '', 
-'', '', '', '', '', '', '', '', '', '#FFFFFF', '', '', '', 
-'', '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', '#FFFFFF', 
-'', '', '', '', '', '#FFFFFF', '', '', '#FFFFFF', '', '', '#FFFFFF', '', 
-'', '', '', '', '', '', '', '', '', '', '', '', '', 
-'#FFFFFF', '#FFFFFF', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', 
-'', '', '', '', '', '', '', '', '', '', '', '', '', 
-'', '#FFFFFF', '', '', '#FFFFFF', '', '', '#FFFFFF', '', '', '', '', '', 
-'#FFFFFF', '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', '', 
-'', '', '', '#FFFFFF', '', '', '', '', '', '', '', '', '', 
-'', '', '', '', '', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', 
-'', '', '', '', '', '', '#FFFFFF', '', '', '', '', '', ''
-]
+const shapes = {
+    largeShape_0: [
+        '', '', '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', '', '', 
+        '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', 
+        '', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '', 
+        '', '', '#FFFFFF', '#FFFFFF', '', '', '', '', '#FFFFFF', '#FFFFFF', '', ''
+    ],
+
+    largeShape_1: [
+        '', '', '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', '', '', 
+        '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '', '', '', '#FFFFFF', '#FFFFFF', '', '', '#FFFFFF', '#FFFFFF', '', '', '', 
+        '', '', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '', '', 
+        '#FFFFFF', '#FFFFFF', '', '', '', '', '', '', '', '', '#FFFFFF', '#FFFFFF'
+    ],
+
+    mediumShape_0: [
+        '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', 
+        '', '', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', '', 
+        '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', 
+        '', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', 
+        '#FFFFFF', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '#FFFFFF', 
+        '', '', '', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '', '', ''
+    ],
+
+    mediumShape_1: [
+        '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', 
+        '#FFFFFF', '', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', '#FFFFFF', 
+        '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', 
+        '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', 
+        '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', 
+        '', '', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF', '', '', 
+        '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', 
+        '', '#FFFFFF', '', '', '', '', '', '', '', '#FFFFFF', ''
+    ],
+
+
+    bangShape: [
+        '', '', '', '', '', '', '#FFFFFF', '', '', '', '', '', '', 
+        '', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', '', '', '', '', 
+        '', '', '', '', '', '', '', '', '', '#FFFFFF', '', '', '', 
+        '', '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', '#FFFFFF', 
+        '', '', '', '', '', '#FFFFFF', '', '', '#FFFFFF', '', '', '#FFFFFF', '', 
+        '', '', '', '', '', '', '', '', '', '', '', '', '', 
+        '#FFFFFF', '#FFFFFF', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '#FFFFFF', '#FFFFFF', 
+        '', '', '', '', '', '', '', '', '', '', '', '', '', 
+        '', '#FFFFFF', '', '', '#FFFFFF', '', '', '#FFFFFF', '', '', '', '', '', 
+        '#FFFFFF', '', '', '#FFFFFF', '', '', '', '', '', '#FFFFFF', '', '', '', 
+        '', '', '', '#FFFFFF', '', '', '', '', '', '', '', '', '', 
+        '', '', '', '', '', '', '#FFFFFF', '', '', '', '#FFFFFF', '', '', 
+        '', '', '', '', '', '', '#FFFFFF', '', '', '', '', '', ''
+    ],
+}
