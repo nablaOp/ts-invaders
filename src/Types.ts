@@ -36,25 +36,34 @@ export const gameOver = (gameState: GameState): boolean => {
         || gameState.invadersGrid.some(r => r.some(i => i != null && i.position.Y >= 179 - Constants.INVADER_HEIGHT))
 }
 
-export type GameObject = {
-    position: Point
+export class GameObject {
+    position!: Point
 }
 
-export type Invader = GameObject & {
+export class Invader extends GameObject {
+    constructor(position: Point, hitpoints: number, score: number, width: number) {
+        super()
+
+        this.position = position
+        this.hitpoints = hitpoints
+        this.score = score
+        this.width = width
+        this.viewIdx = 0
+        this.viewTick = 0
+    }
+    
     hitpoints: number
     score: number
     viewIdx: number
     viewTick: number
-    views: Array<string>
     width: number
 }
 
-export type LargeInvader = Invader 
-export type MediumInvader = Invader
-export type SmallInvader = Invader
-
-export type DestroyedInvader = GameObject & {
-    tick: number
+export class LargeInvader extends Invader {}
+export class MediumInvader extends Invader {}
+export class SmallInvader extends Invader {}
+export class DestroyedInvader extends GameObject {
+    tick!: number
 }
 
 export type OneOfInvaders = LargeInvader | MediumInvader | SmallInvader | DestroyedInvader | null

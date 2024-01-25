@@ -1,5 +1,4 @@
 import { Point } from './Point'
-import { Shape } from './Shape'
 import { 
     GameState, 
     Invader, 
@@ -14,10 +13,9 @@ import * as Constants from './Constants'
 import { 
     renderGameObjectHitBox, 
     transformPointForViewport, 
-    transformShapeForViewport, 
-    getColorByPosition,
     renderColoredPoints, 
 } from './ViewportUtils'
+import { sha } from 'bun'
 
 export const InvadersActor = {
     init(): InvadersGrid {
@@ -144,11 +142,15 @@ export const InvadersActor = {
                         shapes.bangShape, 
                         BANG_SHAPE_WIDTH)
                 } else {
-                    renderColoredPoints(
-                        gameState, 
-                        startPosition,
-                        shapes[invader.views[invader.viewIdx]],
-                        invader.width)
+                    let shape: Array<string> = []
+                    if (invader instanceof LargeInvader)
+                       shape = invader.viewIdx == 0 ? shapes.largeShape_0 : shapes.largeShape_1 
+                    if (invader instanceof MediumInvader)
+                        shape = invader.viewIdx == 0 ? shapes.mediumShape_0 : shapes.mediumShape_1
+                    if (invader instanceof SmallInvader)
+                        shape = invader.viewIdx == 0 ? shapes.mediumShape_0 : shapes.mediumShape_1
+                    
+                    renderColoredPoints(gameState, startPosition, shape, invader.width)
                 }
 
                 renderGameObjectHitBox(
@@ -175,24 +177,15 @@ const isDestroyedInvader = (invader: OneOfInvaders): invader is DestroyedInvader
 }
 
 const spawnLargeInvaderAt = (position: Point): LargeInvader => {
-    return spawnInvaderAt<LargeInvader>(position, 1, 10, 12, ["largeShape_0", "largeShape_1"])
+    return new LargeInvader(position, 1, 10, 12) 
 }
 
 const spawnMediumInvaderAt =(position: Point): MediumInvader => {
-    return spawnInvaderAt<MediumInvader>(position, 1, 20, 11, ["mediumShape_0", "mediumShape_1"])
+    return new MediumInvader(position, 1, 20, 11)
 }
 
 const spawnSmallInvaderAt= (position: Point): SmallInvader => {
-    return spawnInvaderAt<SmallInvader>(position, 1, 30, 11, ["mediumShape_0", "mediumShape_1"])
-}
-
-const spawnInvaderAt = <T extends Invader>(
-    position: Point, 
-    hitpoints: number, 
-    score: number, 
-    width: number,
-    views: Array<string>): T  => {
-    return { position, hitpoints, score, width, views, viewIdx: 0, viewTick: 0} as T
+    return new SmallInvader(position, 1, 30, 11)
 }
 
 const BANG_SHAPE_WIDTH = 13
